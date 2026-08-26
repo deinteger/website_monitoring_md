@@ -6,6 +6,12 @@
 - 시작 URL: https://www.nihhs.go.kr/
 - 허용 도메인: www.nihhs.go.kr, nihhs.go.kr
 
+## 과수생육정보시스템
+
+- 이름: 과수생육정보시스템
+- 시작 URL: https://fruit.nihhs.go.kr/
+- 허용 도메인: fruit.nihhs.go.kr
+
 ## 점검 범위
 
 - 메인 페이지

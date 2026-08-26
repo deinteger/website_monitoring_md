@@ -3,6 +3,7 @@
 ## inspection-details.csv
 
 - 번호
+- 시스템구분
 - 분류
 - 중요도
 - 메뉴또는영역
@@ -19,6 +20,7 @@
 ## recency-status.csv
 
 - 번호
+- 시스템구분
 - 콘텐츠영역
 - 목록페이지제목
 - 목록URL
