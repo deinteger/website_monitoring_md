@@ -17,6 +17,7 @@
 - `.agents/workflows/homepage-test-inspection.md` : 20페이지 시험 점검
 - `.agents/workflows/homepage-full-inspection.md` : 전체 점검
 - `.agents/workflows/homepage-recency-inspection.md` : 게시일 최신성 집중 점검
+- `.agents/workflows/search-index-inspection.md` : 검색엔진 인덱스 링크 오류 점검
 - `references/inspection-targets.md` : 점검 대상과 범위
 - `references/recency-rules.md` : 게시일 및 최신 글 기준
 - `references/exclusion-rules.md` : 제외 대상
