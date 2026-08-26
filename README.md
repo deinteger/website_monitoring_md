@@ -17,11 +17,13 @@
 - `.agents/workflows/homepage-test-inspection.md` : 20페이지 시험 점검
 - `.agents/workflows/homepage-full-inspection.md` : 전체 점검
 - `.agents/workflows/homepage-recency-inspection.md` : 게시일 최신성 집중 점검
+- `.agents/workflows/incremental-inspection.md` : 증분 점검 (변화 감지 후 변경된 게시판만 점검)
 - `.agents/workflows/search-index-inspection.md` : 검색엔진 인덱스 링크 오류 점검
 - `references/inspection-targets.md` : 점검 대상과 범위
 - `references/recency-rules.md` : 게시일 및 최신 글 기준
 - `references/exclusion-rules.md` : 제외 대상
 - `references/report-fields.md` : 결과 파일 필드 정의
+- `references/page-cache.md` : 게시판별 최신 게시일 캐시 (증분 점검용)
 - `previous` : 이전 점검 결과 보관
 - `screenshots` : 오류 화면 저장
 - `output` : 날짜별 폴더에 점검 결과 저장
