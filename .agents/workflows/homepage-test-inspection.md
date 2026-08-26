@@ -9,5 +9,5 @@
 7. 게시일이 표시되는 게시판·썸네일·카드 목록의 최신 글 날짜를 확인한다.
 8. 최신 게시일이 기준일보다 달력 기준 3개월 이상 오래된 경우 `게시 최신성 지연`으로 분류한다.
 9. 명확한 오류는 다시 접속하여 재현 여부를 확인한다.
-10. 결과를 `output/inspection-summary_YYYY-MM-DD.md`, `output/inspection-details_YYYY-MM-DD.csv`, `output/recency-status_YYYY-MM-DD.csv`에 작성한다.
-11. 점검하지 못한 페이지와 이유를 `output/unvisited-pages_YYYY-MM-DD.md`에 기록한다.
+10. 결과를 `output/YYYY-MM-DD/inspection-summary.md`, `output/YYYY-MM-DD/inspection-details.csv`, `output/YYYY-MM-DD/recency-status.csv`에 작성한다.
+11. 점검하지 못한 페이지와 이유를 `output/YYYY-MM-DD/unvisited-pages.md`에 기록한다.

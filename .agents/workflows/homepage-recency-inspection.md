@@ -9,4 +9,4 @@
 7. 기준일의 달력 기준 3개월 전 날짜를 계산한다.
 8. 최신 게시일이 3개월 기준일과 같거나 이전이면 `게시 최신성 지연`으로 판정한다.
 9. 게시일이 없거나 날짜 의미가 불명확하면 `게시일 확인 불가`로 기록한다.
-10. 결과는 `output/recency-status_YYYY-MM-DD.csv`와 `output/inspection-summary_YYYY-MM-DD.md`에 작성한다.
+10. 결과는 `output/YYYY-MM-DD/recency-status.csv`와 `output/YYYY-MM-DD/inspection-summary.md`에 작성한다.

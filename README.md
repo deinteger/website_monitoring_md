@@ -8,7 +8,7 @@
 2. `.agents/rules`, `.agents/skills`, `.agents/workflows`가 인식되는지 확인합니다.
 3. `references/inspection-targets.md`에 점검 대상 URL과 범위를 입력합니다.
 4. 처음에는 최대 20페이지만 시험 점검합니다.
-5. 결과는 점검 날짜를 접미사로 붙여 `output` 폴더에 저장합니다. (예: `inspection-details_2026-08-26.csv`)
+5. 결과는 점검 날짜 폴더를 생성하여 `output` 폴더에 저장합니다. (예: `output/2026-08-26/inspection-details.csv`)
 
 ## 폴더 구성
 
@@ -23,7 +23,7 @@
 - `references/report-fields.md` : 결과 파일 필드 정의
 - `previous` : 이전 점검 결과 보관
 - `screenshots` : 오류 화면 저장
-- `output` : 날짜별 점검 결과 저장
+- `output` : 날짜별 폴더에 점검 결과 저장
 
 ## 권장 첫 명령
 
@@ -33,5 +33,5 @@
 homepage-inspection 스킬과 작업공간 규칙을 사용하라.
 references/inspection-targets.md와 references/recency-rules.md를 읽고,
 최대 20페이지만 시험 점검하라.
-결과는 output/inspection-summary_YYYY-MM-DD.md와 output/inspection-details_YYYY-MM-DD.csv에 작성하라.
+결과는 output/YYYY-MM-DD/inspection-summary.md와 output/YYYY-MM-DD/inspection-details.csv에 작성하라.
 ```

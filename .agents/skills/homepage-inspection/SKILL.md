@@ -78,14 +78,14 @@ description: 공공기관 홈페이지를 브라우저로 탐색하여 링크 �
 
 ## 결과 파일
 
-점검 기준일을 `YYYY-MM-DD` 형식으로 파악하여 다음 날짜 기준 파일로 작성한다. (예: 점검일이 2026-08-26 인 경우)
+점검 기준일을 `YYYY-MM-DD` 형식으로 파악하여 날짜 기준 폴더를 생성하고 작성한다. (예: 점검일이 2026-08-26 인 경우)
 
-- `output/inspection-summary_YYYY-MM-DD.md` (예: `output/inspection-summary_2026-08-26.md`)
-- `output/inspection-details_YYYY-MM-DD.csv` (예: `output/inspection-details_2026-08-26.csv`)
-- `output/recency-status_YYYY-MM-DD.csv` (예: `output/recency-status_2026-08-26.csv`)
-- `output/unvisited-pages_YYYY-MM-DD.md` (예: `output/unvisited-pages_2026-08-26.md`)
+- `output/YYYY-MM-DD/inspection-summary.md` (예: `output/2026-08-26/inspection-summary.md`)
+- `output/YYYY-MM-DD/inspection-details.csv` (예: `output/2026-08-26/inspection-details.csv`)
+- `output/YYYY-MM-DD/recency-status.csv` (예: `output/2026-08-26/recency-status.csv`)
+- `output/YYYY-MM-DD/unvisited-pages.md` (예: `output/2026-08-26/unvisited-pages.md`)
 
-## inspection-summary_YYYY-MM-DD.md 구성
+## inspection-summary.md 구성
 
 1. 점검 개요
 2. 종합 결과
@@ -97,10 +97,10 @@ description: 공공기관 홈페이지를 브라우저로 탐색하여 링크 �
 8. 점검 한계
 9. 후속 조치 제안
 
-## inspection-details_YYYY-MM-DD.csv 항목
+## inspection-details.csv 항목
 
 번호,분류,중요도,메뉴또는영역,페이지제목,URL,최신게시일,기준일,경과기간,발견내용,판단근거,권고조치,스크린샷
 
-## recency-status_YYYY-MM-DD.csv 항목
+## recency-status.csv 항목
 
 번호,콘텐츠영역,목록페이지제목,목록URL,최신게시물제목,최신게시일,기준일,3개월기준일,경과기간,판정,비고
