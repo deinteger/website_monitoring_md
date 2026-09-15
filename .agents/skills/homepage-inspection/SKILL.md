@@ -32,11 +32,24 @@ description: 공공기관 홈페이지를 브라우저로 탐색하여 링크 �
 3. 사이트맵 또는 전체메뉴가 있으면 함께 확인한다.
 4. 중복 URL을 제거한다.
 5. 지정된 최대 페이지 수 또는 범위까지 순차적으로 접속한다.
-6. 각 페이지의 제목, URL, 본문 상태, 주요 링크, 첨부파일을 확인한다.
-7. 게시일이 표시되는 목록형 콘텐츠가 있으면 최신 게시일을 확인한다.
+6. 각 페이지는 전체 텍스트/HTML을 읽지 않고, 스크립트로 제목, URL, 본문 상태(정상/빈 페이지/오류), 주요 링크, 첨부파일 존재 여부만 추출하여 확인한다.
+7. 게시일이 표시되는 목록형 콘텐츠가 있으면 첫 화면 최신 글의 게시일만 추출하여 확인한다. 목록 전체를 순회하지 않는다.
 8. 오류 후보는 한 번 더 접속하거나 새로고침하여 재확인한다.
 9. 명확한 오류에 대해서만 스크린샷을 저장한다.
 10. 결과를 `output` 폴더에 작성한다.
+
+## 필드 추출 방법 (토큰 절감)
+
+- `nihhs-inspector` MCP 서버(`mcp-server/`)가 연결되어 있으면 아래 순서를 우선 사용한다.
+  1. `check_links`로 URL 목록의 접속 가능 여부를 한 번에 확인한다. 브라우저로 하나씩 열지 않는다.
+  2. `check_recency`로 `references/page-cache.md`에 `추출셀렉터`가 있는 게시판의 최신 게시일과 3개월 판정을 한 번에 받는다.
+  3. 반환된 `수동확인필요` 항목만 브라우저로 직접 열어 확인하고, 새로 찾은 CSS 선택자를 `update_page_cache`로 `references/page-cache.md`에 기록한다.
+  4. 그 외 오류 후보 재현, 문구 검토, 현행화 의심 판단 등 맥락 판단이 필요한 항목만 브라우저로 직접 연다.
+- MCP 서버가 없거나 특정 페이지가 JS 렌더링이라 정적 요청으로 못 읽는 경우에만 브라우저 자동화로 대체한다. 이때도 페이지 전문(전체 텍스트/HTML)은 읽지 않고, 스크립트 실행으로 필요한 값만 뽑는다. 예:
+  - 최신 게시일: `document.querySelector('.board_list tbody tr:first-child .date')?.innerText`
+  - 페이지 상태 확인: `document.title`, `document.body.innerText.length === 0`
+  - 깨진 이미지: `[...document.images].filter(img => !img.complete || img.naturalWidth === 0).map(img => img.src)`
+- `page-cache.md`의 `추출셀렉터` 컬럼에는 순수 CSS 선택자만 저장한다 (예: `.board_list tbody tr:first-child .date`). `document.querySelector(...)`나 `.innerText` 같은 코드는 붙이지 않는다 — 이렇게 해야 브라우저의 `querySelector`와 MCP 서버의 `BeautifulSoup.select_one` 양쪽에서 동일한 값을 그대로 재사용할 수 있다.
 
 ## 게시 최신성 점검 절차
 
