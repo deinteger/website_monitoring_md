@@ -40,7 +40,7 @@ description: 공공기관 홈페이지를 브라우저로 탐색하여 링크 �
 
 ## 필드 추출 방법 (토큰 절감)
 
-- `nihhs-inspector` MCP 서버(`mcp-server/`)가 연결되어 있으면 아래 순서를 우선 사용한다.
+- `webcheck` MCP 서버 (webcheck-mcp, `mcp-server/`)가 연결되어 있으면 아래 순서를 우선 사용한다.
   1. `check_links`로 URL 목록의 접속 가능 여부를 한 번에 확인한다. 브라우저로 하나씩 열지 않는다.
   2. `check_recency`로 `references/page-cache.md`에 `추출셀렉터`가 있는 게시판의 최신 게시일과 3개월 판정을 한 번에 받는다.
   3. 반환된 `수동확인필요` 항목만 브라우저로 직접 열어 확인하고, 새로 찾은 CSS 선택자를 `update_page_cache`로 `references/page-cache.md`에 기록한다.

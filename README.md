@@ -28,7 +28,7 @@
 - `references/exclusion-rules.md` : 제외 대상
 - `references/report-fields.md` : 결과 파일 필드 정의
 - `references/page-cache.md` : 게시판별 최신 게시일 캐시 (증분 점검용, 추출셀렉터 포함)
-- `mcp-server/` : 링크 상태 확인·게시일 판정을 처리하는 MCP 서버 (Claude Code/Antigravity에서 도구로 사용)
+- `mcp-server/` : [webcheck-mcp](https://github.com/deinteger/webcheck-mcp) 설치 위치. 링크 상태 확인·게시일 판정을 처리하는 범용 MCP 서버 (Claude Code/Antigravity에서 도구로 사용, 다른 기관/업무에도 재사용 가능)
 - `previous` : 이전 점검 결과 보관
 - `screenshots` : 오류 화면 저장
 - `output` : 날짜별 폴더에 점검 결과 저장

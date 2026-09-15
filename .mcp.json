@@ -1,8 +1,7 @@
 {
   "mcpServers": {
-    "nihhs-inspector": {
-      "command": "mcp-server/.venv/bin/python3",
-      "args": ["mcp-server/server.py"]
+    "webcheck": {
+      "command": "mcp-server/.venv/bin/webcheck-mcp"
     }
   }
 }
