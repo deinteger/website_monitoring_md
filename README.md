@@ -33,6 +33,20 @@
 - `screenshots` : 오류 화면 저장
 - `output` : 날짜별 폴더에 점검 결과 저장
 
+## 선택 기능: 정기 자동 실행
+
+매번 사람이 명령어를 입력하지 않아도 되도록, 원할 때 `/schedule` 스킬로
+정기 실행을 등록할 수 있습니다 (기본값은 꺼져 있음 — 필요할 때만 켜는 옵션).
+
+```text
+/schedule
+매일 새벽 3시에 이 저장소에서 incremental-inspection 워크플로우를 실행해줘.
+```
+
+증분 점검(`incremental-inspection.md`)은 변화가 감지된 게시판만 상세 점검하므로
+정기 실행에 적합합니다. 전체 점검(`homepage-full-inspection.md`)은 자주 돌릴
+필요가 없다면 수동으로만 실행하는 것을 권장합니다.
+
 ## 권장 첫 명령
 
 다음 명령을 Antigravity 에이전트에 입력합니다.
