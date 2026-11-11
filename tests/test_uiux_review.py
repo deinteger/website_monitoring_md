@@ -16,6 +16,8 @@ sys.path.insert(0, HERE)
 import fixture_site as fx  # noqa: E402
 import uiux_review  # noqa: E402
 
+HAVE_SOURCE = os.path.exists(os.path.join(ROOT, "guidelines", "uiux", "2025.08", "source", "guideline.md"))
+
 try:
     import playwright.sync_api  # noqa: F401
     HAVE_PW = True
@@ -130,6 +132,7 @@ class UiuxReviewTests(unittest.TestCase):
     def merge(self):
         return quiet(uiux_review.main, ["merge", "--workspace", self.ws, "--date", "2026-08-26"])
 
+    @unittest.skipUnless(HAVE_SOURCE, "가이드라인 원문(source/guideline.md)이 있는 저장소 원본에서만 실행")
     def test_merge_verifies_quotes_and_rejects_bad_items(self):
         self.plan("--pages", self.base + "/b1")
         good = {"page_id": "P01", "component": "건너뛰기 링크", "guideline_page": 258, "guideline_quote": "건너뛰기 링크의 개수는 3개 이내로 제공한다.",

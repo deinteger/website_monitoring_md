@@ -21,6 +21,7 @@ import policy_check  # noqa: E402
 import portal_plan  # noqa: E402
 import run_checks  # noqa: E402
 
+HAVE_SOURCE = os.path.exists(os.path.join(ROOT, "guidelines", "uiux", "2025.08", "source", "guideline.md"))
 LONG = "기관 안내 본문입니다. " * 20
 GOOD = ('<!DOCTYPE html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>홈</title></head><body>'
         '<a href="#main">본문 바로가기</a><div class="masthead">이 누리집은 대한민국 공식 전자정부 누리집입니다. 대한민국 디지털 정부</div>'
@@ -335,6 +336,7 @@ class GuidelineToolTests(unittest.TestCase):
         self.assertEqual(code, 0, out)
         self.assertIn("오류 0", out)
 
+    @unittest.skipUnless(HAVE_SOURCE, "가이드라인 원문(source/guideline.md)이 있는 저장소 원본에서만 실행")
     def test_tampered_quote_is_rejected(self):
         p = os.path.join(self.gd, "uiux", "2025.08", "rules.json")
         data = json.load(open(p, encoding="utf-8"))
@@ -394,6 +396,7 @@ class GuidelineToolTests(unittest.TestCase):
         idx = json.load(open(os.path.join(self.gd, "index.json"), encoding="utf-8"))
         self.assertEqual(idx["packs"]["uiux"]["current"], "2026.08")
 
+    @unittest.skipUnless(HAVE_SOURCE, "가이드라인 원문(source/guideline.md)이 있는 저장소 원본에서만 실행")
     def test_pages_reader(self):
         code, out, _ = self.g("pages", "uiux", "224")
         self.assertIn("배너 텍스트와 스타일을 변형하지 않는다", out)

@@ -279,6 +279,25 @@ class ReleaseTests(unittest.TestCase):
         finally:
             shutil.rmtree(os.path.dirname(ws), ignore_errors=True)
 
+    @unittest.skipIf(os.name == "nt", "POSIX 전용(sh)")
+    def test_run_demo_launcher_finds_python_or_explains(self):
+        import subprocess
+        code, _ = quiet(make_release.main)
+        self.assertEqual(code, 0)
+        out = os.path.join(make_release.ROOT, "dist", "website-monitoring-kit-v%s" % ml.VERSION)
+        self.assertTrue(os.path.exists(os.path.join(out, "run_demo.bat")))
+        ws = os.path.join(tempfile.mkdtemp(), "demo")
+        try:
+            r = subprocess.run(["sh", os.path.join(out, "run_demo.sh"), "--workspace", ws], capture_output=True, timeout=120)
+            self.assertEqual(r.returncode, 0, r.stdout.decode("utf-8", "replace") + r.stderr.decode("utf-8", "replace"))
+            self.assertIn("게시글 오타 점검", r.stdout.decode("utf-8", "replace"))
+            env = dict(os.environ, PATH="/nonexistent")                  # Python 이 없는 환경: 오류 대신 안내하고 종료코드 1
+            r2 = subprocess.run(["/bin/sh", os.path.join(out, "run_demo.sh")], capture_output=True, env=env, timeout=30)
+            self.assertEqual(r2.returncode, 1)
+            self.assertIn("Python 3.8 이상이 필요", r2.stdout.decode("utf-8", "replace"))
+        finally:
+            shutil.rmtree(os.path.dirname(ws), ignore_errors=True)
+
     def test_release_excludes_workspace_data(self):
         ws_marker = os.path.join(make_release.ROOT, "workspace", "zz_private_marker.txt")
         with open(ws_marker, "w") as f:
