@@ -19,7 +19,7 @@ import zipfile
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import monlib as ml  # noqa: E402
 
-TOP_FILES = ("site-profile.json", "settings.json", "cache.json")
+TOP_FILES = ("site-profile.json", "settings.json", "cache.json", "policy-answers.json")
 
 
 def pack(ws, output, with_reports=False):

@@ -28,6 +28,9 @@ history/*.json ─▶ monthly_report.py ─▶ 월간 보고(신규 콘텐츠·�
 | 현황·담당자 연락처 조회 | `lookup.py status|overview|contact|find` — 사이트에 들어가지 않고 질의 |
 | 검색엔진 인덱스 점검 | `check_index_links.py` — 구글·네이버·다음 `site:` 결과의 깨진 링크·소프트 404 |
 | JS 게시판 보완(선택) | Playwright 선택 모듈, 에이전트 브라우저, 서버 렌더링 주소 |
+| 점검 범위 선택 | `run_checks.py --list/--checks/--interactive` — 전체·게시판·오타·정책정보 확인주간·UI/UX·검색 포털 |
+| 정책정보 확인주간 점검 | `policy_check.py` — 체크리스트 22개 항목: 자동·증거 수집·사람 응답 구분, 응답 기록 |
+| 범정부 UI/UX 가이드라인 점검 | 원문 쪽 근거 규칙 23개(공식 배너·식별자·헤더·푸터·건너뛰기 링크), 개정판은 git으로 갱신(`guidelines.py`) |
 | 주기 실행 | `make_schedule.py` — Windows/cron 등록 명령 생성 |
 
 ## 사용 환경
@@ -88,6 +91,7 @@ python scripts/monthly_report.py --workspace workspace --month 2026-09
 | --- | --- |
 | `core/` | 공통 규칙·판단 기준·절차 (단일 원본) |
 | `scripts/` | 표준 라이브러리 전용 파이썬 |
+| `guidelines/` | 정책정보 확인 체크리스트·UI/UX 가이드라인 규칙팩(데이터). 개정 절차 `core/guideline-update.md` |
 | `config.example/` | 프로필·설정 예시 |
 | `.agents/`, `.claude/`, `.clinerules/` | 에이전트별 얇은 어댑터(스킬·워크플로·규칙 요약) |
 | `docs/` | 운영 가이드, 보안 통보 양식, pi·Orca 사용법 |

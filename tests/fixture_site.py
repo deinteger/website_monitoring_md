@@ -59,6 +59,7 @@ class Handler(http.server.BaseHTTPRequestHandler):
         if path == "/img/ok.png":
             self.send_response(200)
             self.send_header("Content-Type", "image/png")
+            self.send_header("Content-Length", "4")
             self.end_headers()
             if not head:
                 self.wfile.write(b"\x89PNG")

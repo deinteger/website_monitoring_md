@@ -1,0 +1,654 @@
+{
+"source": "guideline.md",
+"total_pages": 1181,
+"entries": [
+{
+"group": "",
+"title": "1. 가이드라인 소개",
+"page": 9,
+"end_page": 20
+},
+{
+"group": "",
+"title": "2. 가이드라인 구성",
+"page": 21,
+"end_page": 30
+},
+{
+"group": "",
+"title": "3. 가이드라인의 활용방법",
+"page": 31,
+"end_page": 39
+},
+{
+"group": "",
+"title": "4. 범정부 UI/UX 디자인시스템",
+"page": 40,
+"end_page": 48
+},
+{
+"group": "",
+"title": "1. 사용자 중심의 서비스",
+"page": 49,
+"end_page": 50
+},
+{
+"group": "",
+"title": "2. 모든 사용자를 포용하는 서비스",
+"page": 51,
+"end_page": 52
+},
+{
+"group": "",
+"title": "3. 공통된 경험 안에서 개별 특성을 고려한 서비스",
+"page": 53,
+"end_page": 54
+},
+{
+"group": "",
+"title": "4. 빠르고 간단한 서비스",
+"page": 55,
+"end_page": 56
+},
+{
+"group": "",
+"title": "5. 쉽게 이해하고 사용할 수 있는 서비스",
+"page": 57,
+"end_page": 58
+},
+{
+"group": "",
+"title": "6. 사용자의 다양한 상황을 고려하는 서비스",
+"page": 59,
+"end_page": 60
+},
+{
+"group": "",
+"title": "7. 신뢰할 수 있는 서비스",
+"page": 61,
+"end_page": 64
+},
+{
+"group": "---",
+"title": "1. 디자인 스타일 소개",
+"page": 65,
+"end_page": 73
+},
+{
+"group": "---",
+"title": "2. 색상(Color)",
+"page": 74,
+"end_page": 101
+},
+{
+"group": "---",
+"title": "3. 타이포그래피(Typography)",
+"page": 102,
+"end_page": 125
+},
+{
+"group": "---",
+"title": "4. 형태(Shape)",
+"page": 126,
+"end_page": 138
+},
+{
+"group": "---",
+"title": "5. 레이아웃(Layout)",
+"page": 139,
+"end_page": 161
+},
+{
+"group": "---",
+"title": "6. 아이콘(Icon)",
+"page": 162,
+"end_page": 176
+},
+{
+"group": "---",
+"title": "7. 엘리베이션(Elevation)",
+"page": 177,
+"end_page": 191
+},
+{
+"group": "---",
+"title": "8. 선명한 화면 모드(High contrast mode)",
+"page": 192,
+"end_page": 204
+},
+{
+"group": "---",
+"title": "9. 디자인 토큰(Design token)",
+"page": 205,
+"end_page": 219
+},
+{
+"group": "아이덴티티",
+"title": "01. 공식 배너(Masthead)",
+"page": 220,
+"end_page": 226
+},
+{
+"group": "아이덴티티",
+"title": "02. 운영기관 식별자(Identifier)",
+"page": 227,
+"end_page": 232
+},
+{
+"group": "아이덴티티",
+"title": "03. 헤더(Header)",
+"page": 233,
+"end_page": 245
+},
+{
+"group": "아이덴티티",
+"title": "04. 푸터(Footer)",
+"page": 246,
+"end_page": 253
+},
+{
+"group": "탐색",
+"title": "01. 건너뛰기 링크(Skip link)",
+"page": 254,
+"end_page": 262
+},
+{
+"group": "탐색",
+"title": "02. 메인 메뉴(Main menu)",
+"page": 263,
+"end_page": 279
+},
+{
+"group": "탐색",
+"title": "03. 브레드크럼(Breadcrumb)",
+"page": 280,
+"end_page": 292
+},
+{
+"group": "탐색",
+"title": "04. 사이드 메뉴(Side navigation)",
+"page": 293,
+"end_page": 307
+},
+{
+"group": "탐색",
+"title": "05. 콘텐츠 내 탐색(In-page navigation)",
+"page": 308,
+"end_page": 316
+},
+{
+"group": "탐색",
+"title": "06. 페이지네이션(Pagination)",
+"page": 317,
+"end_page": 338
+},
+{
+"group": "탐색",
+"title": "07. 탭바(Tab bars)",
+"page": 339,
+"end_page": 352
+},
+{
+"group": "레이아웃·표현",
+"title": "01. 구조화 목록(Structured list)",
+"page": 353,
+"end_page": 359
+},
+{
+"group": "레이아웃·표현",
+"title": "02. 긴급 공지(Critical alerts)",
+"page": 360,
+"end_page": 367
+},
+{
+"group": "레이아웃·표현",
+"title": "03. 달력(Calendar)",
+"page": 368,
+"end_page": 378
+},
+{
+"group": "레이아웃·표현",
+"title": "04. 디스클로저(Disclosure)",
+"page": 379,
+"end_page": 386
+},
+{
+"group": "레이아웃·표현",
+"title": "05. 모달(Modal)",
+"page": 387,
+"end_page": 398
+},
+{
+"group": "레이아웃·표현",
+"title": "06. 배지(Badge)",
+"page": 399,
+"end_page": 404
+},
+{
+"group": "레이아웃·표현",
+"title": "07. 아코디언(Accordion)",
+"page": 405,
+"end_page": 415
+},
+{
+"group": "레이아웃·표현",
+"title": "08. 이미지(Image)",
+"page": 416,
+"end_page": 423
+},
+{
+"group": "레이아웃·표현",
+"title": "09. 캐러셀(Carousel)",
+"page": 424,
+"end_page": 444
+},
+{
+"group": "레이아웃·표현",
+"title": "10. 탭(Tab)",
+"page": 445,
+"end_page": 458
+},
+{
+"group": "---",
+"title": "11. 표(Table)",
+"page": 459,
+"end_page": 470
+},
+{
+"group": "---",
+"title": "12. 스플래시 스크린(Splash screen)",
+"page": 471,
+"end_page": 483
+},
+{
+"group": "---",
+"title": "13. 텍스트 목록(Text list)",
+"page": 484,
+"end_page": 494
+},
+{
+"group": "액션",
+"title": "01. 링크(Link)",
+"page": 495,
+"end_page": 509
+},
+{
+"group": "액션",
+"title": "02. 버튼(Button)",
+"page": 510,
+"end_page": 522
+},
+{
+"group": "선택",
+"title": "01. 라디오 버튼(Radio button)",
+"page": 523,
+"end_page": 537
+},
+{
+"group": "선택",
+"title": "02. 체크박스(Checkbox)",
+"page": 538,
+"end_page": 550
+},
+{
+"group": "선택",
+"title": "03. 셀렉트(Select)",
+"page": 551,
+"end_page": 558
+},
+{
+"group": "선택",
+"title": "04. 태그(Tag)",
+"page": 559,
+"end_page": 569
+},
+{
+"group": "선택",
+"title": "05. 토글 스위치(Toggle switc))",
+"page": 570,
+"end_page": 581
+},
+{
+"group": "피드백",
+"title": "01. 단계 표시기(Step indicator)",
+"page": 582,
+"end_page": 588
+},
+{
+"group": "피드백",
+"title": "02. 스피너(Spinner)",
+"page": 589,
+"end_page": 597
+},
+{
+"group": "도움",
+"title": "01. 도움 패널(Help panel)",
+"page": 598,
+"end_page": 610
+},
+{
+"group": "도움",
+"title": "02. 따라하기 패널(Tutorial panel)",
+"page": 611,
+"end_page": 619
+},
+{
+"group": "도움",
+"title": "03. 맥락적 도움말(Contextual help)",
+"page": 620,
+"end_page": 635
+},
+{
+"group": "도움",
+"title": "04. 코치마크(Coach mark)",
+"page": 636,
+"end_page": 648
+},
+{
+"group": "도움",
+"title": "05. 툴팁(Tooltip)",
+"page": 649,
+"end_page": 663
+},
+{
+"group": "입력",
+"title": "01. 날짜 입력 필드(Date input)",
+"page": 664,
+"end_page": 676
+},
+{
+"group": "입력",
+"title": "02. 텍스트 영역(Textarea)",
+"page": 677,
+"end_page": 685
+},
+{
+"group": "입력",
+"title": "03. 텍스트 입력 필드(Text input)",
+"page": 686,
+"end_page": 696
+},
+{
+"group": "입력",
+"title": "04. 파일 업로드(File upload)",
+"page": 697,
+"end_page": 715
+},
+{
+"group": "설정",
+"title": "01. 언어 변경(Language switcher)",
+"page": 716,
+"end_page": 726
+},
+{
+"group": "설정",
+"title": "02. 화면 크기 조정(Resize)",
+"page": 727,
+"end_page": 737
+},
+{
+"group": "콘텐츠",
+"title": "01. 접근 가능한 미디어(Accessible multimedia)",
+"page": 738,
+"end_page": 746
+},
+{
+"group": "콘텐츠",
+"title": "02. 숨긴 콘텐츠(Visually hidden)",
+"page": 747,
+"end_page": 753
+},
+{
+"group": "콘텐츠",
+"title": "1. 개인 식별 정보 입력",
+"page": 754,
+"end_page": 773
+},
+{
+"group": "콘텐츠",
+"title": "2. 도움",
+"page": 774,
+"end_page": 790
+},
+{
+"group": "콘텐츠",
+"title": "3. 동의",
+"page": 791,
+"end_page": 797
+},
+{
+"group": "콘텐츠",
+"title": "4. 목록 탐색",
+"page": 798,
+"end_page": 802
+},
+{
+"group": "콘텐츠",
+"title": "5. 사용자 피드백",
+"page": 803,
+"end_page": 812
+},
+{
+"group": "콘텐츠",
+"title": "6. 상세 정보 확인",
+"page": 813,
+"end_page": 826
+},
+{
+"group": "콘텐츠",
+"title": "7. 오류",
+"page": 827,
+"end_page": 831
+},
+{
+"group": "콘텐츠",
+"title": "8. 입력폼",
+"page": 832,
+"end_page": 851
+},
+{
+"group": "콘텐츠",
+"title": "9. 첨부파일",
+"page": 852,
+"end_page": 856
+},
+{
+"group": "콘텐츠",
+"title": "10. 필터링·정렬",
+"page": 857,
+"end_page": 877
+},
+{
+"group": "콘텐츠",
+"title": "11. 확인",
+"page": 878,
+"end_page": 884
+},
+{
+"group": "방문",
+"title": "00. 개요",
+"page": 885,
+"end_page": 887
+},
+{
+"group": "방문",
+"title": "01. 방문",
+"page": 888,
+"end_page": 898
+},
+{
+"group": "검색",
+"title": "00. 개요",
+"page": 899,
+"end_page": 903
+},
+{
+"group": "검색",
+"title": "01. 검색 기능 찾기",
+"page": 904,
+"end_page": 912
+},
+{
+"group": "검색",
+"title": "02. 검색어 입력",
+"page": 913,
+"end_page": 928
+},
+{
+"group": "검색",
+"title": "03. 검색 결과 확인",
+"page": 929,
+"end_page": 943
+},
+{
+"group": "검색",
+"title": "04. 상세 검색",
+"page": 944,
+"end_page": 955
+},
+{
+"group": "---",
+"title": "05. 검색 결과 이용",
+"page": 956,
+"end_page": 967
+},
+{
+"group": "---",
+"title": "06. 재검색",
+"page": 968,
+"end_page": 972
+},
+{
+"group": "---",
+"title": "07. 검색 종료",
+"page": 973,
+"end_page": 976
+},
+{
+"group": "로그인",
+"title": "00. 개요",
+"page": 977,
+"end_page": 979
+},
+{
+"group": "로그인",
+"title": "01. 로그인 기능 찾기",
+"page": 980,
+"end_page": 987
+},
+{
+"group": "로그인",
+"title": "02. 로그인 안내",
+"page": 988,
+"end_page": 997
+},
+{
+"group": "로그인",
+"title": "03. 로그인 방식 확인·선택",
+"page": 998,
+"end_page": 1013
+},
+{
+"group": "로그인",
+"title": "04. 로그인 정보 입력",
+"page": 1014,
+"end_page": 1026
+},
+{
+"group": "로그인",
+"title": "05. 로그인 완료",
+"page": 1027,
+"end_page": 1033
+},
+{
+"group": "로그인",
+"title": "06. 서비스 이용",
+"page": 1034,
+"end_page": 1042
+},
+{
+"group": "로그인",
+"title": "07. 로그아웃",
+"page": 1043,
+"end_page": 1051
+},
+{
+"group": "신청",
+"title": "00. 개요",
+"page": 1052,
+"end_page": 1054
+},
+{
+"group": "신청",
+"title": "01. 신청 대상 탐색",
+"page": 1055,
+"end_page": 1068
+},
+{
+"group": "신청",
+"title": "02. 서비스 정보 확인",
+"page": 1069,
+"end_page": 1087
+},
+{
+"group": "신청",
+"title": "03. 유의 사항·자격 확인",
+"page": 1088,
+"end_page": 1096
+},
+{
+"group": "신청",
+"title": "04. 신청서 작성",
+"page": 1097,
+"end_page": 1111
+},
+{
+"group": "신청",
+"title": "05. 확인·확정",
+"page": 1112,
+"end_page": 1120
+},
+{
+"group": "신청",
+"title": "06. 완료",
+"page": 1121,
+"end_page": 1128
+},
+{
+"group": "신청",
+"title": "07. 신청 결과 확인",
+"page": 1129,
+"end_page": 1142
+},
+{
+"group": "정책 정보 확인",
+"title": "00. 개요",
+"page": 1143,
+"end_page": 1145
+},
+{
+"group": "정책 정보 확인",
+"title": "01. 정책 탐색",
+"page": 1146,
+"end_page": 1154
+},
+{
+"group": "정책 정보 확인",
+"title": "02. 정보 확인",
+"page": 1155,
+"end_page": 1164
+},
+{
+"group": "정책 정보 확인",
+"title": "03. 정책 자료 탐색",
+"page": 1165,
+"end_page": 1173
+},
+{
+"group": "정책 정보 확인",
+"title": "용어집",
+"page": 1174,
+"end_page": 1181
+}
+]
+}

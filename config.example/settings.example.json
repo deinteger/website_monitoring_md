@@ -37,5 +37,10 @@
   "_typo_check설명": "게시글 본문 오타 점검(신규 글만, 게시판당·실행당 상한). 켜면 상세 페이지 요청이 추가되므로 보안 통보에 포함",
   "recent_posts_keep_days": 60,
   "max_total_sec": 45,
-  "abort_after_failures": 10
+  "abort_after_failures": 10,
+  "policy": {
+    "check_external_links": false,
+    "max_external_links": 100
+  },
+  "_policy설명": "정책정보 확인주간 PW-06(외부 링크 단절) 점검: 외부 사이트에 HEAD 요청이 나가므로 옵트인(기본 꺼짐)"
 }

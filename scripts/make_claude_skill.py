@@ -19,7 +19,7 @@ import monlib as ml  # noqa: E402
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 NAME = "homepage-inspection"
-SKIP_SCRIPTS = {"make_release.py", "make_claude_skill.py", "eval_judge.py"}
+SKIP_SCRIPTS = {"make_release.py", "make_claude_skill.py", "eval_judge.py", "guidelines.py"}
 
 SKILL_MD = """---
 name: homepage-inspection
@@ -68,6 +68,12 @@ description: 공공기관 홈페이지 점검 스킬(채팅용). 게시판 최�
 `state.zip`(이력 포함)을 올린 대화에서: `python SKILL_DIR/scripts/monthly_report.py --workspace WS --month YYYY-MM`
 생성된 `monthly-report.md`의 `AI_COMMENT` 자리에 3~5줄 종합 의견을 쓴다 (`core/monthly-report.md` 규칙, 표의 수치만 인용).
 
+## 정책정보 확인주간·UI/UX 점검 (선택)
+
+범위를 말하지 않았으면 먼저 묻는다: 게시판 점검 / 정책정보 확인주간 / UI·UX 가이드라인 / 검색 포털. `python SKILL_DIR/scripts/run_checks.py --workspace WS --checks policy,uiux` (사이트 접속 필요).
+`auto`는 자동 판정, `assist`는 증거 수집, `attest`는 **사람이 네/아니오로 응답**하며 대신 작성하지 않는다. 응답은 `python SKILL_DIR/scripts/policy_check.py answer PW-03 --yes --note "..."`로 기록하고 `state.zip`에 담긴다.
+검색 포털은 계획(`WS/index/plan.md`)만 만든다(종료코드 4): 브라우저가 없는 환경에서는 사용자가 결과 URL을 직접 모아 올려야 한다.
+
 ## 질문에 답하기 (state.zip을 올린 대화)
 
 `state.zip`을 복원한 뒤에는 **사이트 접속 없이** 다음 질문에 답할 수 있다.
@@ -97,6 +103,7 @@ def main():
         f.write(SKILL_MD)
     for d in ("core", "config.example"):
         shutil.copytree(os.path.join(ROOT, d), os.path.join(out, d), ignore=shutil.ignore_patterns("__pycache__"))
+    shutil.copytree(os.path.join(ROOT, "guidelines"), os.path.join(out, "guidelines"), ignore=shutil.ignore_patterns("__pycache__", "source"))
     os.makedirs(os.path.join(out, "scripts"))
     for f in sorted(os.listdir(os.path.join(ROOT, "scripts"))):
         if f.endswith(".py") and f not in SKIP_SCRIPTS:

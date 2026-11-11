@@ -1,6 +1,6 @@
 ---
 name: homepage-inspection
-description: 공공기관 홈페이지 점검·모니터링·질의 스킬. 게시판 최신 게시일(달력 기준 3개월 지연), 링크·첨부·접속 오류, 현행화 의심, 문구·게시글 본문 오타, 월간 점검 보고, 검색엔진 인덱스 깨진 링크를 점검하고, 어제·최근 현행화된 게시물 조회, 게시판 현황, 특정 페이지 담당자·연락처 찾기에 답한다. 홈페이지 점검, 모니터링, 현행화, 게시일, 오타, 월간 보고, 담당자 연락처, 최근 등록 게시물, 사이트 온보딩 요청에 사용한다.
+description: 공공기관 홈페이지 점검·모니터링·질의 스킬. 점검 범위(전체, 게시판, 오타, 정책정보 확인주간, 범정부 UI/UX 가이드라인, 검색 포털)를 사용자가 고르게 하고 실행한다. 게시판 최신 게시일, 링크·접속 오류, 현행화, 게시글 오타, 월간 보고, 구글·네이버·다음 site: 점검, 정책정보 확인 체크리스트, 최근 현행화 게시물·현황·담당자 연락처 조회에 사용한다. 홈페이지 점검, 모니터링, 정책정보 확인주간, UI/UX 가이드라인, 검색포털 점검 요청에 사용한다.
 ---
 
 # 홈페이지 점검
@@ -35,3 +35,12 @@ python scripts/monthly_report.py --workspace workspace --month YYYY-MM         #
 - "보도자료 담당자 연락처" → `python scripts/lookup.py --workspace workspace contact 보도자료` (공개된 표기만, 근거 원문 제공, 추정 금지)
 - 게시글 본문 오타 점검(선택): `collect.py --typo-check` → `core/typo-guide.md` 기준 판단
 - 상세는 `core/skill-body.md` 7~8절
+
+## 점검 범위 선택 (먼저 물어본다)
+
+사용자가 범위를 말하지 않으면 **전체 / 게시판 / 오타 / 정책정보 확인주간 / UI·UX 가이드라인 / 검색 포털** 중 무엇을 할지 먼저 묻는다 (복수 선택 가능).
+
+- `python scripts/run_checks.py --workspace workspace --list` (선택지·비용) / `--checks all|board,typo,policy,uiux,portal` / `--dry-run` (요청량)
+- 정책정보 확인주간·UI/UX: 자동(auto)·증거 수집(assist)·사람 응답(attest) 구분. **네/아니오 응답은 사람이 하며 대신 작성하지 않는다** (`policy_check.py answer`)
+- 검색 포털: 계획 생성(종료코드 4) → 브라우저로 URL 수집 → 재실행. 스크립트로 검색엔진을 긁지 않는다
+- 가이드라인 개정 반영: `core/guideline-update.md`, `python scripts/guidelines.py validate|diff|use`

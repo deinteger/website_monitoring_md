@@ -1,0 +1,437 @@
+{
+ "pack": "uiux",
+ "version": "2025.08",
+ "title": "디지털 정부서비스 UI/UX 가이드라인('25.8.) 준수 점검",
+ "rules": [
+  {
+   "id": "UX-M1",
+   "category": "공식 배너(Masthead)",
+   "text": "공식 배너는 모든 화면의 최상단에 제공한다.",
+   "method": "auto",
+   "status": "active",
+   "source_ref": "p.222",
+   "source_page": 222,
+   "source_quote": "배너는 모든 화면의 최상단에 제공한다.",
+   "checks": [
+    {
+     "type": "text_contains",
+     "any": [
+      "이 누리집은 대한민국 공식 전자정부 누리집입니다."
+     ],
+     "scope": "each_page_top",
+     "required": true
+    }
+   ],
+   "hint": "수집한 모든 페이지의 상단(본문 텍스트 앞 1,500자)에서 배너 문구를 찾는다"
+  },
+  {
+   "id": "UX-M2",
+   "category": "공식 배너(Masthead)",
+   "text": "공식 배너의 문구를 변형하지 않는다 (\"이 누리집은 대한민국 공식 전자정부 누리집입니다.\").",
+   "method": "auto",
+   "status": "active",
+   "source_ref": "p.224",
+   "source_page": 224,
+   "source_quote": "배너 텍스트와 스타일을 변형하지 않는다.",
+   "checks": [
+    {
+     "type": "text_contains",
+     "any": [
+      "이 누리집은 대한민국 공식 전자정부 누리집입니다."
+     ],
+     "scope": "home",
+     "required": true,
+     "variants": [
+      "대한민국 공식 전자정부 웹사이트"
+     ]
+    }
+   ],
+   "hint": "원문 모범 사례의 문구와 일치하는지 확인(스타일 변형은 화면 확인 필요). 피해야 할 사례 문구 '대한민국 공식 전자정부 웹사이트'는 변형으로 표시"
+  },
+  {
+   "id": "UX-M3",
+   "category": "공식 배너(Masthead)",
+   "text": "건너뛰기 링크는 공식 배너 이전에 제공한다.",
+   "method": "auto",
+   "status": "active",
+   "source_ref": "p.226",
+   "source_page": 226,
+   "source_quote": "건너뛰기 링크는 공식 배너 이전에 제공한다.",
+   "checks": [
+    {
+     "type": "order",
+     "scope": "html",
+     "items": [
+      {
+       "name": "건너뛰기 링크",
+       "regex": "<a\\b[^>]*href\\s*=\\s*[\"\\']#[^\"\\']*[\"\\'][^>]*>[^<]{0,40}(?:바로\\s*가기|건너뛰기)"
+      },
+      {
+       "name": "공식 배너",
+       "regex": "이\\ 누리집은\\ 대한민국\\ 공식\\ 전자정부\\ 누리집입니다\\."
+      }
+     ],
+     "require_all": true
+    }
+   ]
+  },
+  {
+   "id": "UX-I1",
+   "category": "운영기관 식별자(Identifier)",
+   "text": "푸터에 운영기관 식별자 안내 문구(\"이 누리집은 [운영기관명]에서 운영하는 누리집입니다.\")를 제공한다.",
+   "method": "auto",
+   "status": "active",
+   "source_ref": "p.231",
+   "source_page": 231,
+   "source_quote": "이 누리집은 [운영기관명]에서 운영하는 누리집입니다.",
+   "checks": [
+    {
+     "type": "text_matches",
+     "patterns": [
+      "이\\s*누리집은\\s*.{1,40}?에서\\s*운영하는\\s*누리집입니다"
+     ],
+     "scope": "footer",
+     "required": true
+    }
+   ],
+   "hint": "문구 형식 기준. 운영기관 로고의 상위 기관 적합성은 화면 확인 필요"
+  },
+  {
+   "id": "UX-I2",
+   "category": "운영기관 식별자(Identifier)",
+   "text": "식별자 영역은 푸터 내부의 가장 마지막 구획으로 제공한다.",
+   "method": "assist",
+   "status": "active",
+   "source_ref": "p.232",
+   "source_page": 232,
+   "source_quote": "식별자 영역은 구조적으로 푸터 내부에 포함되도록 제공한다.",
+   "checks": [
+    {
+     "type": "order",
+     "scope": "footer",
+     "items": [
+      {
+       "name": "저작권 정보",
+       "regex": "저작권|copyright|ⓒ|©"
+      },
+      {
+       "name": "운영기관 식별자",
+       "regex": "이\\s*누리집은.{1,40}?운영하는\\s*누리집"
+      }
+     ],
+     "require_all": false
+    }
+   ],
+   "hint": "푸터 텍스트 안에서 식별자 문구가 저작권 문구보다 뒤에 있는지 본 근사 판정. 구조(section/article)는 화면·소스 확인 필요"
+  },
+  {
+   "id": "UX-I3",
+   "category": "운영기관 식별자(Identifier)",
+   "text": "푸터의 로고 이미지에 대체 텍스트를 제공한다.",
+   "method": "auto",
+   "status": "active",
+   "source_ref": "p.232",
+   "source_page": 232,
+   "source_quote": "로고 이미지에 대체 텍스트를 제공한다.",
+   "checks": [
+    {
+     "type": "region_img_alt",
+     "scope": "footer",
+     "require_alt": true
+    }
+   ]
+  },
+  {
+   "id": "UX-H1",
+   "category": "헤더(Header)",
+   "text": "건너뛰기 링크를 문서 최상단(가장 첫 요소)에 배치한다.",
+   "method": "auto",
+   "status": "active",
+   "source_ref": "p.245",
+   "source_page": 245,
+   "source_quote": "건너뛰기 링크를 최상단에 배치한다.",
+   "checks": [
+    {
+     "type": "skip_link_first"
+    }
+   ],
+   "hint": "문서의 첫 링크가 건너뛰기 링크인지 확인. 쿠키 배너·모달이 있으면 예외(p.261)라 사람이 확인"
+  },
+  {
+   "id": "UX-H2",
+   "category": "헤더(Header)",
+   "text": "헤더 로고 이미지의 대체 텍스트에 '로고'라는 단어를 포함하지 않는다.",
+   "method": "auto",
+   "status": "active",
+   "source_ref": "p.245",
+   "source_page": 245,
+   "source_quote": "대체 텍스트에 '로고'라는 단어가 포함되지 않도록 유의해야 한다.",
+   "checks": [
+    {
+     "type": "region_img_alt",
+     "scope": "header",
+     "forbid_words": [
+      "로고"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "UX-H3",
+   "category": "헤더(Header)",
+   "text": "정부 로고는 항상 헤더의 왼쪽 상단에 제공한다.",
+   "method": "attest",
+   "status": "active",
+   "source_ref": "p.236",
+   "source_page": 236,
+   "source_quote": "정부 로고는 항상 헤더의 왼쪽 상단에 제공한다.",
+   "hint": "화면에서 사람이 확인"
+  },
+  {
+   "id": "UX-H4",
+   "category": "헤더(Header)",
+   "text": "유틸리티 링크 그룹은 헤더 우측 상단에 제공하고 디바이더로 구분하며, 5개 이상이면 드롭다운 메뉴를 사용한다.",
+   "method": "attest",
+   "status": "active",
+   "source_ref": "p.238",
+   "source_page": 238,
+   "source_quote": "유틸리티 링크가 5개 이상 필요한 경우 드롭다운 메뉴를 사용한다.",
+   "hint": "화면에서 사람이 확인 (p.237~238)"
+  },
+  {
+   "id": "UX-H5",
+   "category": "헤더(Header)",
+   "text": "언어 설정 드롭다운 메뉴에 국기를 사용하지 않는다.",
+   "method": "attest",
+   "status": "active",
+   "source_ref": "p.239",
+   "source_page": 239,
+   "source_quote": "언어 설정을 위한 드롭다운 메뉴에 국기를 사용하지 않는다.",
+   "hint": "언어 설정이 있는 경우에만 화면에서 확인"
+  },
+  {
+   "id": "UX-F1",
+   "category": "푸터(Footer)",
+   "text": "푸터의 모든 요소를 <footer> 요소 안에 배치한다.",
+   "method": "auto",
+   "status": "active",
+   "source_ref": "p.252",
+   "source_page": 252,
+   "source_quote": "푸터의 모든 요소는 <footer> 내부에 배치하여",
+   "checks": [
+    {
+     "type": "region_exists",
+     "scope": "footer",
+     "tag_only": true,
+     "all_pages": true,
+     "required": true
+    }
+   ]
+  },
+  {
+   "id": "UX-F2",
+   "category": "푸터(Footer)",
+   "text": "푸터 정보는 서비스 로고, 연락처, 유틸리티 링크, 정책 링크, 저작권 정보의 순으로 제공한다.",
+   "method": "assist",
+   "status": "active",
+   "source_ref": "p.249",
+   "source_page": 249,
+   "source_quote": "푸터 섹션의 정보는 서비스 로고, 연락처, 유틸리티 링크, 정책 링크, 저작권 정보의 순으로 제공한다.",
+   "checks": [
+    {
+     "type": "order",
+     "scope": "footer",
+     "items": [
+      {
+       "name": "연락처",
+       "regex": "주소|전화|이메일|e-?mail|@"
+      },
+      {
+       "name": "정책 링크",
+       "regex": "개인정보\\s*처리\\s*방침|웹\\s*접근성"
+      },
+      {
+       "name": "저작권 정보",
+       "regex": "저작권|copyright|ⓒ|©"
+      }
+     ],
+     "require_all": false
+    }
+   ],
+   "hint": "텍스트에서 각 정보가 처음 나타나는 위치로 본 근사 판정. 그룹 표현·로고 위치는 화면 확인 필요"
+  },
+  {
+   "id": "UX-F3",
+   "category": "푸터(Footer)",
+   "text": "푸터에 '개인정보 처리방침'을 반드시 표시한다.",
+   "method": "auto",
+   "status": "active",
+   "source_ref": "p.249",
+   "source_page": 249,
+   "source_quote": "개인정보 처리방침은 반드시 웹사이트에 공개해야 한다.",
+   "checks": [
+    {
+     "type": "link_text_matches",
+     "patterns": [
+      "개인정보\\s*처리\\s*방침"
+     ],
+     "scope": "footer",
+     "all_pages": true,
+     "required": true
+    }
+   ],
+   "hint": "원문은 '개인정보 처리방침'이라는 명칭 사용을 요구(p.249, 쪽에 따라 띄어쓰기 표기가 다름 → 공백 유무는 허용). 다른 명칭(예: 개인정보 보호정책)은 미충족으로 본다"
+  },
+  {
+   "id": "UX-F4",
+   "category": "푸터(Footer)",
+   "text": "푸터에 연락처(주소, 이메일, 대표전화 등)와 저작권 정보를 제공한다.",
+   "method": "assist",
+   "status": "active",
+   "source_ref": "p.246",
+   "source_page": 246,
+   "source_quote": "주소, 이메일 주소, 대표 전화번호, 민원 전화번호 등 연락 수단 정보",
+   "checks": [
+    {
+     "type": "text_matches",
+     "patterns": [
+      "저작권|copyright|ⓒ|©"
+     ],
+     "scope": "footer",
+     "evidence_only": true
+    },
+    {
+     "type": "text_matches",
+     "patterns": [
+      "0\\d{1,2}[-.)\\s]?\\d{3,4}[-.\\s]?\\d{4}|1[5-9]\\d{2}[-.\\s]?\\d{4}"
+     ],
+     "scope": "footer",
+     "evidence_only": true
+    },
+    {
+     "type": "text_matches",
+     "patterns": [
+      "[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}"
+     ],
+     "scope": "footer",
+     "evidence_only": true
+    }
+   ],
+   "hint": "구성 요소: 연락처(주소·이메일·대표 전화·민원 전화)와 저작권 정보 텍스트(p.246)"
+  },
+  {
+   "id": "UX-F5",
+   "category": "푸터(Footer)",
+   "text": "푸터의 연락처 정보와 링크를 최신 상태로 유지한다(존재하지 않는 페이지로 이동하지 않음).",
+   "method": "auto",
+   "status": "active",
+   "source_ref": "p.250",
+   "source_page": 250,
+   "source_quote": "링크를 실행했을 때 존재하지 않는 사이트/페이지/화면으로 이동하거나 예상과 다른 목적지로 이동하지 않도록 점검하고 최신화해야 한다.",
+   "checks": [
+    {
+     "type": "link_check",
+     "scope": "footer",
+     "max_links": 30
+    }
+   ],
+   "hint": "같은 도메인 링크만 점검(외부 링크는 PW-06 옵트인 점검)"
+  },
+  {
+   "id": "UX-F6",
+   "category": "푸터(Footer)",
+   "text": "전자상거래가 포함된 경우 이용약관을 푸터에 반드시 표시한다.",
+   "method": "attest",
+   "status": "active",
+   "source_ref": "p.247",
+   "source_page": 247,
+   "source_quote": "전자상거래가 포함된 경우 이용약관을 반드시 표시한다.",
+   "hint": "전자상거래 기능이 있는 경우에만 해당"
+  },
+  {
+   "id": "UX-S1",
+   "category": "건너뛰기 링크(Skip link)",
+   "text": "웹사이트의 모든 화면에 건너뛰기 링크를 제공한다.",
+   "method": "auto",
+   "status": "active",
+   "source_ref": "p.258",
+   "source_page": 258,
+   "source_quote": "웹사이트의 모든 화면에는 건너뛰기 링크를 제공해야 한다.",
+   "checks": [
+    {
+     "type": "skip_link_present"
+    }
+   ]
+  },
+  {
+   "id": "UX-S2",
+   "category": "건너뛰기 링크(Skip link)",
+   "text": "건너뛰기 링크의 개수는 3개 이내로 제공한다.",
+   "method": "auto",
+   "status": "active",
+   "source_ref": "p.258",
+   "source_page": 258,
+   "source_quote": "건너뛰기 링크의 개수는 3개 이내로 제공한다.",
+   "checks": [
+    {
+     "type": "skip_link_count",
+     "max": 3
+    }
+   ]
+  },
+  {
+   "id": "UX-S3",
+   "category": "건너뛰기 링크(Skip link)",
+   "text": "여러 건너뛰기 링크 중 화면의 핵심 영역(본문)으로 이동하는 링크를 첫 번째로 제공한다.",
+   "method": "assist",
+   "status": "active",
+   "source_ref": "p.258",
+   "source_page": 258,
+   "source_quote": "화면의 핵심 영역으로 이동하는 링크를 가장 첫 번째 항목으로 제공해야 한다.",
+   "checks": [
+    {
+     "type": "skip_main_first"
+    }
+   ],
+   "hint": "링크 문구·목적지 id로 본 근사 판정"
+  },
+  {
+   "id": "UX-S4",
+   "category": "건너뛰기 링크(Skip link)",
+   "text": "건너뛰기 링크의 목적지가 실제로 존재한다.",
+   "method": "auto",
+   "status": "active",
+   "source_ref": "p.259",
+   "source_page": 259,
+   "source_quote": "건너뛰기 링크의 목적지를 적절하게 설정한다.",
+   "checks": [
+    {
+     "type": "skip_target_exists"
+    }
+   ],
+   "hint": "목적지 구간에 반복 영역(사이드 메뉴·브레드크럼 등)이 없어야 하는지는 화면 확인 필요(p.259)"
+  },
+  {
+   "id": "UX-X1",
+   "category": "가이드라인 활용",
+   "text": "구성 요소별 가이드라인을 체크리스트로 목록화하여 이슈를 점검한다(자체 검증 체크리스트 활용).",
+   "method": "attest",
+   "status": "active",
+   "source_ref": "p.34",
+   "source_page": 34,
+   "source_quote": "구성 요소별 가이드라인을 체크리스트로 목록화하여 이슈 점검",
+   "hint": "krds.go.kr > 소식·소통 > 자료실의 자체 검증 체크리스트(정책정보 확인 체크리스트 6-4)"
+  },
+  {
+   "id": "UX-X2",
+   "category": "가이드라인 활용",
+   "text": "서비스의 UI/UX 현황을 상시적으로 점검하고 개선한다.",
+   "method": "attest",
+   "status": "active",
+   "source_ref": "p.35",
+   "source_page": 35,
+   "source_quote": "서비스의 UI/UX 현황을 상시적으로 점검하고 개선하는 운영 과정에서",
+   "hint": "상시·정기 진단 계획 수립(정책정보 확인 체크리스트 6-1)"
+  }
+ ]
+}

@@ -93,6 +93,25 @@ python scripts/monthly_report.py --workspace workspace --month YYYY-MM
 2. 판단: `core/typo-guide.md` 기준으로 판단해 `typo-judgement.json` 작성 (또는 `python scripts/judge.py --workspace workspace --task typo`). `quote`는 본문에 있는 구절만, 고유명사·전문용어는 오류로 보고하지 않는다.
 3. 요약: `make_summary.py`가 6절에 오타 표를 넣는다. 본문을 못 찾은 게시판은 프로필에 `body_region`을 지정한다 (`--probe <id> --probe-post`로 미리 확인).
 
+## 9. 점검 범위 선택 (전체 / 게시판 / 오타 / 정책정보 확인주간 / UI/UX / 검색 포털)
+
+사용자가 점검 범위를 말하지 않았으면 **먼저 선택지를 물어본다** (여러 개 선택 가능). 선택 후 `scripts/run_checks.py`로 실행한다.
+
+| 선택 | 내용 | 명령 |
+| --- | --- | --- |
+| 전체 | 게시판 + 정책정보 확인주간 + UI/UX + 검색 포털 | `python scripts/run_checks.py --workspace workspace --checks all` |
+| 게시판 | 접속·링크 오류, 3개월 최신성, 변경 감지 | `--checks board` (모드: `--mode incremental|full`) |
+| 오타 | 신규 게시글 본문 맞춤법·오탈자 (AI 판단) | `--checks typo` (게시판 점검과 함께 수집) |
+| 정책정보 확인주간 | 체크리스트 22개 항목: 자동 확인·증거 수집, 사람 응답 문항 분리 | `--checks policy` |
+| UI/UX | 범정부 UI/UX 가이드라인(공식 배너·식별자·헤더·푸터·건너뛰기 링크) | `--checks uiux` |
+| 검색 포털 | 구글·네이버·다음 `site:` 결과의 깨진 링크·소프트404·불법 광고 의심 | `--checks portal` |
+
+- 목록과 비용은 `--list`, 요청량은 `--dry-run`으로 먼저 확인한다 (보안 통보에 쓴다). 터미널 사용자는 `--interactive`로 번호를 고를 수 있다.
+- **검색 포털**: 스크립트는 검색 계획(`workspace/index/plan.md`)만 만든다(종료코드 4). 에이전트 브라우저로 `site:도메인 [키워드]`를 검색해 결과를 `workspace/index/<엔진>.txt`(`URL<탭>제목<탭>키워드`)에 저장한 뒤 같은 명령을 다시 실행하면 점검한다. 검색엔진을 스크립트로 직접 긁지 않고, 캡차·차단 시 중단한다.
+- **정책정보 확인주간·UI/UX 결과 해석**: 판정 방식이 `auto`인 항목만 자동 판정이고, `assist`는 증거 수집(충족이라고 단정하지 않음), `attest`는 **사람이 네/아니오로 응답**한다. 응답 기록: `python scripts/policy_check.py answer PW-03 --yes --note "..."`, 현황: `policy_check.py status`. 사람 응답을 대신 작성하지 않는다.
+- 규칙이 `검수 전(draft)`이거나 규칙팩이 `reviewed=false`이면 결과는 참고용이라고 사용자에게 알린다.
+- 가이드라인 개정 반영: `core/guideline-update.md` (규칙 데이터는 `guidelines/`, 근거 인용 검증 포함).
+
 ## 하지 말 것
 
 - 스크립트 결과의 날짜·상태를 직접 재계산하거나 뒤집기

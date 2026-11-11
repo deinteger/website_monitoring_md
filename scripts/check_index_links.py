@@ -10,7 +10,7 @@
 URL 수집은 검색엔진 약관·봇 차단 때문에 스크립트가 직접 하지 않는다. 수집 방법은 docs/운영가이드.md 11절
 (에이전트 브라우저, 공식 검색 API, 사람이 복사). CSS 깨짐 같은 '화면 렌더링' 오류는 브라우저가 필요하다.
 
-입력 형식: 한 줄에 `URL` 또는 `URL<탭>검색결과제목`. 또는 이 스크립트가 만든 CSV(검색엔진·검색결과제목·검색결과URL 열).
+입력 형식: 한 줄에 `URL` 또는 `URL<탭>검색결과제목` 또는 `URL<탭>검색결과제목<탭>검색 키워드`(불법 광고 키워드 점검: 페이지에 키워드가 실제로 있으면 불법광고의심). 또는 이 스크립트가 만든 CSV(검색엔진·검색결과제목·검색결과URL 열).
 
   python scripts/check_index_links.py --workspace workspace \\
       --input google=urls_google.txt --input naver=urls_naver.txt --input daum=urls_daum.txt --check-images
@@ -33,7 +33,7 @@ import monlib as ml  # noqa: E402
 COLUMNS = ["번호", "시스템구분", "검색엔진", "검색결과제목", "검색결과URL", "실제접속상태", "실제페이지제목", "제목일치여부", "판정", "비고"]
 SOFT404 = ("페이지를 찾을 수 없", "존재하지 않는 페이지", "삭제된 게시", "잘못된 접근", "요청하신 페이지", "Not Found",
            "Page not found", "404 Error", "접근할 수 없는 페이지")
-SEVERE = ("404오류", "500오류", "접속오류", "리다이렉트오류", "소프트404", "빈페이지의심")
+SEVERE = ("404오류", "500오류", "접속오류", "리다이렉트오류", "소프트404", "빈페이지의심", "불법광고의심")
 
 
 def _norm(s):
@@ -64,22 +64,24 @@ def read_inputs(specs):
             f.seek(0)
             if "검색결과URL" in head:
                 for r in csv.DictReader(f):
-                    rows.append((r.get("검색엔진") or engine, r["검색결과URL"], r.get("검색결과제목", "")))
+                    rows.append((r.get("검색엔진") or engine, r["검색결과URL"], r.get("검색결과제목", ""), r.get("키워드", "")))
             else:
                 for line in f:
                     line = line.strip()
                     if not line or line.startswith("#"):
                         continue
                     parts = line.split("\t")
-                    rows.append((engine, parts[0], parts[1] if len(parts) > 1 else ""))
+                    rows.append((engine, parts[0], parts[1] if len(parts) > 1 else "", parts[2].strip() if len(parts) > 2 else ""))
     merged, order = {}, []
-    for engine, url, title in rows:
+    for engine, url, title, kw in rows:
         key = normalize_url(url)
         if not key.lower().startswith("http"):
             continue
         if key not in merged:
-            merged[key] = {"engines": [], "title": title}
+            merged[key] = {"engines": [], "title": title, "keywords": []}
             order.append(key)
+        if kw and kw not in merged[key]["keywords"]:
+            merged[key]["keywords"].append(kw)
         if engine not in merged[key]["engines"]:
             merged[key]["engines"].append(engine)
         if title and not merged[key]["title"]:
@@ -128,6 +130,12 @@ def inspect(url, meta, fetcher, check_images, max_images):
     elif len(text) < 80 and not row["verdict"]:
         row["verdict"] = "빈페이지의심"
         notes.append("본문 텍스트가 거의 없음 (스크립트 렌더링 페이지일 수 있어 브라우저 확인 필요)")
+    hit = [k for k in meta.get("keywords", []) if k in text or k in title]
+    if hit and not row["verdict"]:
+        row["verdict"] = "불법광고의심"
+        notes.append("검색 키워드 '%s'가 페이지 본문·제목에 있음(불법 광고 가능성, 사람 확인·삭제·색인 제거 필요)" % ", ".join(hit[:3]))
+    elif meta.get("keywords") and not row["verdict"]:
+        notes.append("검색 키워드(%s)는 현재 페이지에 없음(색인 캐시만 남았을 수 있음 → 색인 삭제 요청 검토)" % ", ".join(meta["keywords"][:2]))
     if check_images and not row["verdict"]:
         bad = []
         seen = set()

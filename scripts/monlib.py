@@ -381,6 +381,24 @@ def extract_post_body(html, board):
     return "", "not_found"
 
 
+_CLIENT_REDIRECTS = [
+    re.compile(r"<meta[^>]+http-equiv\s*=\s*[\"']?refresh[\"']?[^>]*content\s*=\s*[\"']?\s*\d+\s*;\s*url\s*=\s*['\"]?([^\"'>\s]+)", re.I),
+    re.compile(r"(?:document\.location|window\.location|\blocation)(?:\.href)?\s*=\s*[\"']([^\"']+)[\"']"),
+    re.compile(r"location\.(?:replace|assign)\(\s*[\"']([^\"']+)[\"']\s*\)"),
+]
+
+
+def find_client_redirect(html, base_url):
+    """HTTP 리다이렉트가 아닌 자바스크립트·메타 새로고침 이동 주소를 찾는다(주석 처리된 스크립트는 무시).
+    메인 주소가 빈 껍데기 페이지로 실제 홈에 이동시키는 사이트에서 점검 대상 페이지를 바로잡는 용도."""
+    clean = re.sub(r"<!--.*?-->", "", html, flags=re.S)
+    for pat in _CLIENT_REDIRECTS:
+        m = pat.search(clean)
+        if m and m.group(1).strip() and not m.group(1).strip().startswith(("#", "javascript:")):
+            return urllib.parse.urljoin(base_url, m.group(1).strip())
+    return None
+
+
 def fingerprint(parsed):
     """변경 감지용 지문. 조회수 같은 변동 숫자의 영향을 줄이기 위해 제목·날짜 중심으로 계산한다."""
     if parsed["rows"]:

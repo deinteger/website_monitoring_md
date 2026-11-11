@@ -20,7 +20,7 @@ import monlib as ml  # noqa: E402
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 ALLOW = ["AGENTS.md", "CLAUDE.md", "README.md", ".gitignore", "core", "docs", "scripts", "config.example", "tests",
-         ".agents/skills", ".agents/rules", ".agents/workflows", ".claude/skills", ".clinerules"]
+         ".agents/skills", ".agents/rules", ".agents/workflows", ".claude/skills", ".clinerules", "guidelines"]
 ALLOWED_HOSTS = {"example.go.kr", "www.example.go.kr", "example.com", "www.example.com", "127.0.0.1", "localhost",
                  "api.openai.com", "api.anthropic.com", "claude.ai", "github.com", "pi.dev", "onorca.dev", "www.onorca.dev",
                  "code.claude.com", "cdn.jsdelivr.net", "docs.cline.bot", "fast.io", "support.claude.com", "platform.claude.com",
@@ -35,7 +35,8 @@ def collect_files():
             yield item
         elif os.path.isdir(p):
             for d, dirs, files in os.walk(p):
-                dirs[:] = [x for x in dirs if x not in ("__pycache__", ".pytest_cache")]
+                dirs[:] = [x for x in dirs if x not in ("__pycache__", ".pytest_cache")
+                           and not (x == "source" and os.sep + "guidelines" + os.sep in d + os.sep)]   # 가이드라인 원문(대용량)은 배포 제외
                 for f in files:
                     if not f.endswith((".pyc", ".tmp")):
                         yield os.path.relpath(os.path.join(d, f), ROOT)
