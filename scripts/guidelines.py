@@ -67,7 +67,10 @@ def validate_pack(gdir, pack, version, all_ids):
     pages = load_source_pages(base, meta)
     grounded = meta.get("grounding") == "required"
     if grounded and pages is None:
-        errs.append("grounding=required 인데 원문(source md)이 없음")
+        if os.path.isdir(os.path.join(base, "source")):
+            errs.append("grounding=required 인데 원문(source md)이 없음")
+        else:
+            warns.append("원문(source/)이 배포되지 않은 패키지라 원문 인용 검증을 건너뜀 (저장소 원본에서는 검증됨)")
     ids = set()
     for r in data["rules"]:
         rid = r.get("id", "?")

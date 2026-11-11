@@ -443,7 +443,8 @@ class Fetcher(object):
         ua = settings["user_agent"]
         if settings.get("contact"):
             ua += " (+%s)" % settings["contact"]
-        self.ua = ua
+        # HTTP 헤더는 ASCII만 허용한다. 한글 담당 부서·연락처는 퍼센트 인코딩해 보낸다(서버 관리자가 로그에서 식별 가능).
+        self.ua = urllib.parse.quote(ua, safe=" ()+@.,:/;=-_&?*")
         self._lock = threading.Lock()
         self._next = 0.0
         self._blocked = 0

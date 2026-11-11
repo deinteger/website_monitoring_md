@@ -239,6 +239,17 @@ class CollectTests(unittest.TestCase):
         self.assertTrue(summ["partial"])
         self.assertTrue(any("연속" in w for w in summ["warnings"]))
 
+    def test_korean_contact_in_user_agent_does_not_break_requests(self):
+        """회귀: settings의 contact에 한글이 있으면 User-Agent 헤더 인코딩 오류로 모든 요청이 실패하던 결함."""
+        fx.write_workspace(self.ws, self.port, [{"id": "n", "name": "공지", "url": "/notice", "cycle": "daily", "region": {"tag": "table", "class": "board"}}],
+                           {"contact": "기획과 홍길동 (031-000-0000)", "user_agent": "점검키트/1.0"})
+        code, _ = self.run_collect("--mode", "full", "--today", "2026-08-26")
+        self.assertEqual(code, 0)
+        self.assertEqual(self.statuses("2026-08-26")["n"], "정상")
+        ua = ml.Fetcher(ml.load_settings(self.ws), []).ua
+        ua.encode("ascii")                                            # 헤더로 보낼 수 있는 ASCII
+        self.assertIn("%", ua)
+
     def test_probe(self):
         code, out = self.run_collect("--probe", "notice", "--today", "2026-08-26")
         self.assertEqual(code, 0)

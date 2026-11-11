@@ -14,7 +14,7 @@ pi(Orca 포함), Codex, Antigravity, Cline 등 `AGENTS.md`를 읽는 에이전�
 | 경로 | 내용 |
 | --- | --- |
 | `core/` | 공통 규칙·판단 기준·절차 (수정 시 전원에게 배포되는 원본) |
-| `scripts/` | 표준 라이브러리 전용 파이썬 (`collect.py`, `discover.py`, `judge.py`, `make_summary.py`, `monthly_report.py`, `run_all.py`, `check_index_links.py`, `render.py`(선택), `chat_state.py`, `make_release.py`, `make_claude_skill.py`) |
+| `scripts/` | 표준 라이브러리 전용 파이썬 (`collect.py`, `discover.py`, `judge.py`, `make_summary.py`, `monthly_report.py`, `run_all.py`, `check_index_links.py`, `render.py`(선택), `chat_state.py`, `demo.py`(접속·키 없이 구동하는 데모), `make_release.py`, `make_claude_skill.py`) |
 | `guidelines/` | 정책정보 확인 체크리스트·UI/UX 가이드라인 규칙팩(데이터, 매년 개정 시 git으로 갱신). 절차: `core/guideline-update.md` |
 | `config.example/` | 프로필·설정 예시 → 담당자가 `workspace/`로 복사해 수정 |
 | `workspace/` | **담당자별 데이터**(프로필, 설정, 캐시, 이력, 결과). 배포·커밋 대상 아님 |

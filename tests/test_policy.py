@@ -292,7 +292,7 @@ class GuidelineToolTests(unittest.TestCase):
         self.assertEqual(self.g("validate", "--pack", "uiux")[0], 1)
 
     def test_unknown_check_type_and_duplicate_id_rejected(self):
-        p = os.path.join(self.gd, "policy-week", "2026", "rules.json")
+        p = os.path.join(self.gd, "policy-week", "2026.02", "rules.json")
         data = json.load(open(p, encoding="utf-8"))
         data["rules"][5]["checks"] = [{"type": "nonexistent_check"}]
         data["rules"][1]["id"] = data["rules"][0]["id"]
