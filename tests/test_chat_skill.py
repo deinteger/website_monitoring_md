@@ -83,6 +83,12 @@ class ChatSkillTests(unittest.TestCase):
         self.assertFalse(summ["boards_total"] == 0)
         self.assertEqual(summ["ai_review_items"], 0)       # 이전 상태가 이어져 변경 없는 게시판은 AI 대상이 아님
 
+    def test_chat_skill_package_also_runs_demo(self):
+        """회귀: 스킬 패키지에 guidelines.py 가 빠져 uiux_review import 가 실패하고 데모가 깨지던 결함(채팅용 zip 포함)."""
+        r = subprocess.run([sys.executable, os.path.join(self.skill, "scripts", "demo.py"), "--workspace", os.path.join(self.tmp, "wsdemo", "demo")],
+                           cwd=self.tmp, capture_output=True, timeout=120)
+        self.assertEqual(r.returncode, 0, r.stdout.decode("utf-8", "replace") + r.stderr.decode("utf-8", "replace"))
+
     def test_unpack_rejects_path_traversal(self):
         evil = os.path.join(self.tmp, "evil.zip")
         with zipfile.ZipFile(evil, "w") as z:
@@ -95,6 +101,34 @@ class ChatSkillTests(unittest.TestCase):
             z.writestr("unexpected.py", "x")
         with self.assertRaises(SystemExit):
             chat_state.unpack(evil2, os.path.join(self.tmp, "ws"))
+
+
+class CodeSkillTests(unittest.TestCase):
+    """Claude Code 개인 스킬용(자체 완결형) 빌드와 최상위 SKILL.md."""
+
+    def test_root_skill_md_matches_code_variant(self):
+        root = open(os.path.join(ROOT, "SKILL.md"), encoding="utf-8").read()
+        self.assertEqual(root, make_claude_skill.SKILL_MD_CODE)              # 사본이 어긋나지 않게
+
+    def test_code_skill_is_self_contained_and_runs_demo(self):
+        self.assertEqual(make_claude_skill.main(["--target", "code"]), 0)
+        zp = os.path.join(ROOT, "dist", "homepage-inspection-claude-code-skill.zip")
+        tmp = tempfile.mkdtemp()
+        try:
+            with zipfile.ZipFile(zp) as z:
+                z.extractall(tmp)
+            skill = os.path.join(tmp, "homepage-inspection")
+            text = open(os.path.join(skill, "SKILL.md"), encoding="utf-8").read()
+            self.assertTrue(re.match(r"^---\nname: homepage-inspection\ndescription: .+\n---\n", text))
+            for ref in re.findall(r"SKILL_DIR/((?:scripts|core|config\.example|docs)/[\w./\-가-힣]+\.(?:py|md|json))", text):
+                self.assertTrue(os.path.exists(os.path.join(skill, ref)), ref)   # 스킬 폴더 안의 참조 파일이 실제로 있다
+            self.assertGreaterEqual(len([f for f in os.listdir(os.path.join(skill, "scripts")) if f.endswith(".py")]), 15)
+            r = subprocess.run([sys.executable, os.path.join(skill, "scripts", "demo.py"), "--workspace", os.path.join(tmp, "ws", "demo")],
+                               cwd=tmp, capture_output=True, timeout=120)          # 스킬 폴더만으로 데모가 끝까지 구동된다
+            self.assertEqual(r.returncode, 0, r.stdout.decode("utf-8", "replace") + r.stderr.decode("utf-8", "replace"))
+            self.assertIn("게시글 오타 점검", r.stdout.decode("utf-8", "replace"))
+        finally:
+            shutil.rmtree(tmp, ignore_errors=True)
 
 
 if __name__ == "__main__":

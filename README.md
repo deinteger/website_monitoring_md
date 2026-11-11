@@ -41,6 +41,17 @@ history/*.json ─▶ monthly_report.py ─▶ 월간 보고(신규 콘텐츠·�
 | AI 확인·AI 규칙 검수 | 소스 기준 미충족을 AI가 화면에서 재확인(`policy_check.py ai-merge`), 규칙 검수도 AI가 수행(`guidelines.py review-*`) |
 | 주기 실행 | `make_schedule.py` — Windows/cron 등록 명령 생성 |
 
+## 스킬로 쓰기 (`SKILL.md` 위치)
+
+스킬 정의 파일의 이름은 **`SKILL.md`**(단수·대문자)입니다. `.claude`, `.agents`는 점으로 시작하는 **숨김 폴더**라 탐색기에서 보이지 않을 수 있어 최상위에도 두었습니다.
+
+| 쓰는 곳 | 파일·폴더 | 방법 |
+|---|---|---|
+| **Claude Code — 이 폴더를 프로젝트로 열기** | `.claude/skills/homepage-inspection/SKILL.md` | 폴더를 열기만 하면 자동 인식(스크립트·지침은 이 폴더 루트의 `scripts/`, `core/`) |
+| **Claude Code — 어디서나(개인 스킬)** | 최상위 `SKILL.md` + `scripts/` + `core/` … (이 폴더 전체가 자체 완결형 스킬 폴더) | 이 폴더를 `~/.claude/skills/homepage-inspection/`(Windows `%USERPROFILE%\.claude\skills\`)로 복사, 또는 `python scripts/make_claude_skill.py --target code`가 만든 zip(스킬만, 약 150KB)을 그곳에 풀기 |
+| **claude.ai 채팅** | `python scripts/make_claude_skill.py` 가 만든 `dist/homepage-inspection-claude-skill.zip` | Customize > Skills > Upload a skill (`docs/claude-chat.md`) |
+| pi·Orca, Codex, Antigravity, Cline | `AGENTS.md`, `.agents/skills/…/SKILL.md`, `.clinerules/` | 이 폴더를 열기 (`docs/pi-orca.md`, `docs/cline-vscode.md`) |
+
 ## 사용 환경
 
 | 환경 | 가능 범위 |
