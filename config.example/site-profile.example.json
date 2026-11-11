@@ -1,0 +1,78 @@
+{
+  "site_name": "예시 시스템",
+  "base_url": "https://www.example.go.kr/",
+  "allowed_domains": ["www.example.go.kr"],
+  "boards": [
+    {
+      "id": "notice",
+      "name": "공지사항",
+      "system": "대표 홈페이지",
+      "url": "https://www.example.go.kr/board/notice.do",
+      "type": "board",
+      "cycle": "daily",
+      "owner": "총무과",
+      "region": {"tag": "table", "class": "board-list"},
+      "row_tag": "tr"
+    },
+    {
+      "id": "press",
+      "name": "보도자료",
+      "system": "대표 홈페이지",
+      "url": "https://www.example.go.kr/board/press.do",
+      "type": "board",
+      "cycle": "weekly",
+      "owner": "홍보담당관",
+      "region": {"tag": "ul", "id": "pressList"},
+      "row_tag": "li",
+      "pages": 3,
+      "page_url_template": "https://www.example.go.kr/board/press.do?page={page}"
+    },
+    {
+      "id": "annual-report",
+      "name": "연보(연 1회 발간)",
+      "system": "대표 홈페이지",
+      "url": "https://www.example.go.kr/board/annual.do",
+      "type": "board",
+      "cycle": "quarterly",
+      "owner": "기획과",
+      "irregular": true
+    },
+    {
+      "id": "archive-2019",
+      "name": "2019년 행사 기록",
+      "system": "대표 홈페이지",
+      "url": "https://www.example.go.kr/archive/2019.do",
+      "type": "board",
+      "cycle": "monthly",
+      "recency_exempt": true
+    },
+    {
+      "id": "about",
+      "name": "기관 소개",
+      "system": "대표 홈페이지",
+      "url": "https://www.example.go.kr/about.do",
+      "type": "static",
+      "cycle": "monthly"
+    },
+    {
+      "id": "old-popup",
+      "name": "점검 제외 예시",
+      "url": "https://www.example.go.kr/popup.do",
+      "exclude": true,
+      "exclude_reason": "로그인 필요 화면"
+    }
+  ],
+  "_설명": {
+    "type": "board=게시일이 있는 목록(최신성 판정), static=정적 페이지(접속·링크만)",
+    "cycle": "daily|weekly|monthly|quarterly (monthly/quarterly는 달력 기준). 증분 점검에서 방문 주기",
+    "region": "목록이 들어 있는 요소. {tag, class 또는 id}. 생략하면 페이지 전체에서 날짜를 찾는다",
+    "row_tag": "목록 한 줄의 태그(tr/li 등). 생략하면 자동 추정",
+    "date_regex": "게시일이 특이한 형식일 때 (연·월·일 3개 그룹) 예: (\\d{2})\\.(\\d{2})\\.(\\d{2})",
+    "date_source": "first_per_row(기본: 각 행의 첫 날짜) | any(각 행의 가장 늦은 날짜)",
+    "irregular": "비정기 게시 영역. 3개월 경과해도 오류가 아니라 '담당자 확인 필요'",
+    "recency_exempt": "연례 간행물·아카이브. 최신성 판정에서 제외",
+    "exclude": "점검 제외 (접속하지 않음)",
+    "pages/page_url_template": "월별 신규 콘텐츠 집계용으로 목록을 여러 쪽 수집할 때 ({page} 포함)",
+    "owner": "담당부서 (월간 보고의 부서별 현황에 사용)"
+  }
+}

@@ -1,0 +1,9 @@
+# 담당자별 데이터 (프로필·설정·캐시·이력·결과)는 커밋하지 않는다
+workspace/*
+!workspace/.gitkeep
+
+dist/
+__pycache__/
+*.pyc
+*.tmp
+.env

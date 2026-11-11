@@ -1,0 +1,23 @@
+{
+  "_설명": "workspace/settings.json 으로 복사해 필요한 값만 남겨도 된다. 생략한 값은 기본값을 쓴다. 요청 정책은 보안·운영 부서 협의 후에만 완화한다.",
+  "contact": "OO과 홍길동 (031-000-0000)",
+  "user_agent": "WebsiteMonitoringKit/1.0",
+  "max_concurrency": 2,
+  "min_interval_sec": 1.0,
+  "timeout_sec": 20,
+  "retries": 2,
+  "retry_wait_sec": 3,
+  "abort_after_blocked": 5,
+  "stale_months": 3,
+  "check_links": true,
+  "max_links_per_board": 15,
+  "link_check_interval_days": 7,
+  "full_every_days": 30,
+  "verify_ssl": true,
+  "llm": {
+    "allowed": false,
+    "provider": "openai",
+    "base_url": "",
+    "model": ""
+  }
+}

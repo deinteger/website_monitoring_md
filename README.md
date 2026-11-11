@@ -1,40 +1,88 @@
-# 홈페이지 점검·모니터링 작업공간
+# 홈페이지 점검·모니터링 키트
 
-이 폴더는 Antigravity에서 별도 프로그램 없이 에이전트가 홈페이지를 직접 탐색하고 점검하도록 구성한 작업공간입니다.
+공공기관 홈페이지의 **링크·접속 오류, 게시 최신성(달력 기준 3개월), 현행화 의심, 문구, 월간 현황**을 점검하는 키트입니다.
+**수집·날짜 계산은 파이썬 스크립트**가, **추론이 필요한 판단은 AI**가 맡습니다. 담당자가 각자 맡은 시스템에 적용하도록 설계했습니다.
 
-## 시작 방법
+## 어떻게 동작하나
 
-1. Antigravity에서 이 폴더를 작업공간으로 엽니다.
-2. `.agents/rules`, `.agents/skills`, `.agents/workflows`가 인식되는지 확인합니다.
-3. `references/inspection-targets.md`에 점검 대상 URL과 범위를 입력합니다.
-4. 처음에는 최대 20페이지만 시험 점검합니다.
-5. 결과는 점검 날짜 폴더를 생성하여 `output` 폴더에 저장합니다. (예: `output/2026-08-26/inspection-details.csv`)
-
-## 폴더 구성
-
-- `.agents/rules/inspection-rules.md` : 항상 지켜야 할 점검 원칙
-- `.agents/skills/homepage-inspection/SKILL.md` : 홈페이지 점검 스킬
-- `.agents/workflows/homepage-test-inspection.md` : 20페이지 시험 점검
-- `.agents/workflows/homepage-full-inspection.md` : 전체 점검
-- `.agents/workflows/homepage-recency-inspection.md` : 게시일 최신성 집중 점검
-- `.agents/workflows/incremental-inspection.md` : 증분 점검 (변화 감지 후 변경된 게시판만 점검)
-- `.agents/workflows/search-index-inspection.md` : 검색엔진 인덱스 링크 오류 점검
-- `references/inspection-targets.md` : 점검 대상과 범위
-- `references/recency-rules.md` : 게시일 및 최신 글 기준
-- `references/exclusion-rules.md` : 제외 대상
-- `references/report-fields.md` : 결과 파일 필드 정의
-- `references/page-cache.md` : 게시판별 최신 게시일 캐시 (증분 점검용)
-- `previous` : 이전 점검 결과 보관
-- `screenshots` : 오류 화면 저장
-- `output` : 날짜별 폴더에 점검 결과 저장
-
-## 권장 첫 명령
-
-다음 명령을 Antigravity 에이전트에 입력합니다.
-
-```text
-homepage-inspection 스킬과 작업공간 규칙을 사용하라.
-references/inspection-targets.md와 references/recency-rules.md를 읽고,
-최대 20페이지만 시험 점검하라.
-결과는 output/YYYY-MM-DD/inspection-summary.md와 output/YYYY-MM-DD/inspection-details.csv에 작성하라.
 ```
+site-profile.json ─▶ collect.py ─▶ findings.json / recency-status.csv / inspection-details.csv
+(게시판 목록·주기)   (HTTP·목록 파싱·3개월 판정·링크·변경 감지·신규/지속/해결)
+                          └▶ ai-review-queue.json (신규·변경·이상 건만) ─▶ AI 판단(judgement.json)
+                                                                        └▶ make_summary.py ─▶ inspection-summary.md
+history/*.json ─▶ monthly_report.py ─▶ 월간 보고(신규 콘텐츠·현행화 수치, 전월 대비)
+```
+
+- 방문하지 않은 게시판도 날짜 경과 판정은 매번 다시 계산하고, AI는 **변경·이상 건만** 판단하므로 매일 돌려도 불필요한 점검과 토큰 소모가 적습니다.
+- AI 판단은 원문 인용을 요구하고 검증합니다 (원문에 없는 인용은 '담당자 확인 필요'로 하향).
+
+## 사용 환경
+
+| 환경 | 가능 범위 |
+| --- | --- |
+| Claude Code | 전체 (`CLAUDE.md` → `AGENTS.md`, `.claude/skills/`) |
+| pi 에이전트 / Orca | 전체 (`AGENTS.md`, `.agents/skills/`) — `docs/pi-orca.md` |
+| Codex, Antigravity | 전체 (`AGENTS.md`, `.agents/`) |
+| 스크립트 + 개인 API 키 | 수집·요약·AI 판단·월간 보고, 스케줄 무인 실행 — `docs/운영가이드.md` |
+| GPT/Claude 일반 채팅 | 파일 실행 불가. 스크립트 결과(`ai-review-queue.json` 등)를 업로드해 판단·보고서 작성만 가능 |
+
+## 빠른 시작
+
+```bash
+# 1) 설정: config.example/settings.example.json 을 workspace/settings.json 으로 복사하고 contact 입력
+# 2) 정보보안 담당 통보 (docs/보안통보_요청서_양식.md) — 요청량은 dry-run 으로 산출
+# 3) 프로필 초안 생성 후 검수 (core/onboarding.md, 에이전트에 맡겨도 됨)
+python scripts/discover.py --workspace workspace --base-url https://대상주소/ --site-name "시스템명"
+python scripts/collect.py --workspace workspace --probe <board_id>      # 게시판별 목록 인식 확인
+# 4) 시험 점검 → 전체 점검 → 일상(증분) 점검
+python scripts/collect.py --workspace workspace --mode full --limit 20
+python scripts/collect.py --workspace workspace --mode full --dry-run
+python scripts/collect.py --workspace workspace --mode incremental
+# 5) 요약, 월간 보고
+python scripts/make_summary.py --workspace workspace
+python scripts/monthly_report.py --workspace workspace --month 2026-09
+```
+
+에이전트로 쓸 때는 "homepage-inspection 스킬로 증분 점검하라"처럼 요청하면 됩니다.
+
+## 결과
+
+`workspace/runs/YYYY-MM-DD/`: `inspection-summary.md`, `inspection-details.csv`, `recency-status.csv`, `findings.json`, `ai-review-queue.json`, `judgement.json`, `run-summary.json`
+`workspace/reports/YYYY-MM/`: `monthly-report.md`, `monthly-metrics.json`, `monthly-boards.csv`
+필드 정의는 `core/report-fields.md`, 월간 지표 정의는 `core/monthly-report.md` 입니다.
+
+## 보안·운영 주의
+
+- **읽기 전용**(GET/HEAD)이며 로그인·입력·업로드를 하지 않습니다. 허용 도메인 밖은 접속하지 않습니다.
+- 기본 요청 정책은 보수적입니다(동시 2, 간격 1초). **실행 전 보안·운영 부서에 통보**하고, 차단되면 우회하지 말고 허용 목록 등록을 요청하세요. 403/429가 연속되면 자동 중단합니다.
+- 외부 AI로 점검 내용을 보내려면 기관 보안 승인 후 `llm.allowed`를 켜야 합니다. 전송 전 주민번호·전화·이메일은 마스킹됩니다(이름·주소는 마스킹되지 않음).
+- `workspace/`(프로필·캐시·결과)는 커밋·배포하지 않습니다.
+
+## 한계 (알고 쓰세요)
+
+- 스크립트는 자바스크립트로 그려지는 목록을 읽지 못합니다 → `js_suspected`로 표시되며 브라우저 에이전트 또는 수동 확인이 필요합니다.
+- 게시일은 목록의 첫 날짜를 기본으로 인식합니다. 사이트마다 `--probe`로 검증하고 프로필을 보정해야 합니다.
+- 월별 신규 콘텐츠 건수는 수집한 목록 범위 내 집계입니다(부분 집계는 표시됨).
+- AI 판단은 모델마다 편차가 있습니다. 모델을 바꾸면 `scripts/eval_judge.py`로 비교하세요.
+- timelygpt API의 호환 여부와 pi의 스킬 인식 경로는 설치 버전·제공 사양에 따라 **확인이 필요**합니다.
+
+## 폴더
+
+| 경로 | 내용 |
+| --- | --- |
+| `core/` | 공통 규칙·판단 기준·절차 (단일 원본) |
+| `scripts/` | 표준 라이브러리 전용 파이썬 |
+| `config.example/` | 프로필·설정 예시 |
+| `.agents/`, `.claude/` | 에이전트별 얇은 어댑터(스킬·워크플로·규칙 요약) |
+| `docs/` | 운영 가이드, 보안 통보 양식, pi·Orca 사용법 |
+| `tests/` | 테스트와 AI 판단 평가 세트 |
+| `workspace/` | 담당자별 데이터 (커밋 대상 아님). `workspace/legacy/`는 이전 점검 원본(내부용) |
+
+## 개발·배포
+
+```bash
+python -m unittest discover -s tests          # 테스트 (로컬 가짜 사이트 사용, 외부 요청 없음)
+python scripts/make_release.py                # 배포 zip (허용 목록 방식, 실제 기관 도메인 혼입 검사)
+```
+
+버전: `VERSION` 참고. 규칙·판단 기준 개선은 `core/`만 고치면 모든 어댑터에 반영됩니다.
