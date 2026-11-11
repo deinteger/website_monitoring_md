@@ -3,6 +3,26 @@
 신규 시스템을 점검 대상으로 등록하는 절차. **AI는 최초 1회 사이트 구조를 파악하고, 이후 일상 점검은 스크립트가 프로필로 수행한다.**
 사이트 구조(게시판 위치, 날짜 표기, 목록 영역)가 시스템마다 달라 확산의 가장 큰 장벽이므로, 이 단계를 정확히 하는 것이 중요하다.
 
+## 0. 채팅으로 설정하기 (소스·JSON 직접 수정 불필요)
+
+사용자가 "우리 기관 사이트 점검 대상으로 추가해줘", "담당자 연락처 바꿔줘", "AI 연결 설정해줘"처럼 말하면 에이전트는 **`scripts/setup.py`로 설정을 바꾼다.** 필요한 값(사이트 이름·주소·담당 부서·주기·AI 종류·모델명)이 빠졌으면 먼저 묻는다.
+
+```bash
+python scripts/setup.py init --site-name "OO 홈페이지" --base-url https://대상주소/ --contact "부서 이름(연락처)"
+python scripts/setup.py board add --id notice --name 공지사항 --url https://대상주소/board/notice.do --owner 총무과 --cycle daily
+python scripts/setup.py board add --id biz --name 공지 --system "다른시스템" --url https://다른주소/n   # 한 프로필에 여러 시스템·도메인 가능
+python scripts/setup.py board set notice cycle=weekly owner=기획과     # 수정 (exclude=true, irregular=true 등)
+python scripts/setup.py board remove notice
+python scripts/setup.py set stale_months 2                              # 일반 설정 (잘못된 키·값은 거부)
+python scripts/setup.py llm --provider anthropic --model <모델명> --allow yes   # 외부 AI 전송 허용은 기관 보안 승인 후에만
+python scripts/setup.py show                                            # 현재 설정·대상 표로 확인
+```
+
+- 저장 전 검증하며 오류면 파일을 바꾸지 않는다. 대상 도메인은 `allowed_domains`에 자동 반영된다.
+- **API 키는 파일에 저장하지 않는다.** 사용자가 터미널에서 `LLM_API_KEY` 환경변수로 지정하도록 안내하고, 채팅에 키를 붙여 넣지 않게 한다.
+- `llm --allow yes`는 사용자가 명시적으로 요청·확인한 경우에만 실행한다(`core/rules.md`의 외부 전송 승인 규칙).
+- 게시판 자동 발견은 아래 2절의 `discover.py` 후 `python scripts/setup.py board import-draft`로 프로필에 합친다.
+
 ## 1. 사전 준비
 
 1. `workspace/` 폴더에 `settings.json`을 만든다 (`config.example/settings.example.json` 복사). `contact`에 담당 부서·연락처를 입력한다.

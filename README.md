@@ -133,3 +133,8 @@ python scripts/make_release.py                # 배포 zip (허용 목록 방식
 ```
 
 버전: `VERSION` 참고. 규칙·판단 기준 개선은 `core/`만 고치면 모든 어댑터에 반영됩니다.
+
+
+## 설정은 채팅 또는 명령으로
+
+소스 코드나 JSON을 직접 열지 않아도 된다. AI에게 "우리 기관 사이트(주소, 게시판)를 점검 대상으로 추가해줘", "AI 연결을 anthropic으로 설정해줘"라고 말하면 `scripts/setup.py`가 `workspace/`의 설정을 바꾼다. 직접 할 때는 `python scripts/setup.py show` 로 현재 상태를 보고 `board add|set|remove`, `set`, `llm`, `site` 명령을 쓴다. API 키는 파일에 저장하지 않고 환경변수 `LLM_API_KEY` 로만 지정한다. 모든 설정·결과는 사용자 PC의 `workspace/`에만 저장된다. 자세한 절차는 `core/onboarding.md` 0절.

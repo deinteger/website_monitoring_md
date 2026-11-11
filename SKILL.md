@@ -12,7 +12,7 @@ description: 공공기관 홈페이지 점검·모니터링·질의 스킬(Claud
 ## 먼저
 1. `SKILL_DIR/core/rules.md`를 읽는다 (읽기 전용, 차단 시 중단, 외부 전송 승인, 개인정보 마스킹, 사람 응답 대행 금지).
 2. 처음 쓰는 사용자에게는 데모를 권한다: `python SKILL_DIR/scripts/demo.py --workspace WS/demo` (접속·API 키 없이 모의 사이트로 전체 점검 시연).
-3. `WS/site-profile.json`이 없으면 `SKILL_DIR/core/onboarding.md`로 만든다 (`SKILL_DIR/config.example/`의 예시를 `WS/`로 복사해 시작, `scripts/discover.py`로 초안 생성).
+3. `WS/site-profile.json`이 없으면 `SKILL_DIR/core/onboarding.md`로 만든다 (`SKILL_DIR/config.example/`의 예시를 `WS/`로 복사해 시작, `scripts/discover.py`로 초안 생성). 사용자가 대상 사이트·담당자·AI 연결을 말하면 소스나 JSON을 직접 고치지 말고 `scripts/setup.py`(`board add|set|remove`, `set`, `llm`, `show`)로 반영한다(`core/onboarding.md` 0절). API 키는 파일에 쓰지 않고 `LLM_API_KEY` 환경변수로 안내한다.
 
 ## 점검 범위 선택 (먼저 물어본다)
 사용자가 범위를 말하지 않으면 **전체 / 게시판 / 오타 / 정책정보 확인주간 / UI·UX 가이드라인 / UI·UX 화면 AI 검토 / 검색 포털** 중 무엇을 할지 묻는다(복수 선택 가능).
