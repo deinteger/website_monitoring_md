@@ -122,7 +122,10 @@ class UiuxRuleTests(Base):
         self.run_pc("--pack", "uiux")
         r, d = self.results("uiux")
         self.assertEqual(r["UX-M2"]["source_ref"], "p.224")
-        self.assertFalse(d["meta"]["reviewed"])
+        self.assertTrue(d["meta"]["reviewed"])                              # AI 검수 완료
+        self.assertFalse(d["meta"].get("human_confirmed"))                  # 사람 최종 확인 전
+        self.assertIn("사람의 최종 확인 전", open(os.path.join(self.ws, "runs", "2026-08-26", "policy-uiux.md"), encoding="utf-8").read())
+        self.assertTrue(r["UX-M2"]["source_quote"])
 
     def test_draft_rules_are_reference_only(self):
         gd = tempfile.mkdtemp()
@@ -140,6 +143,61 @@ class UiuxRuleTests(Base):
             self.assertEqual(r["UX-M1"]["suggest"], "")
         finally:
             shutil.rmtree(gd)
+
+
+class AIMergeTests(Base):
+    """소스 기준 미충족을 AI가 화면에서 확인한 결과를 병합한다."""
+
+    def judgement(self, items, model="test-agent"):
+        d = os.path.join(self.ws, "runs", "2026-08-26")
+        json.dump({"model": model, "items": items}, open(os.path.join(d, "policy-ai-judgement.json"), "w", encoding="utf-8"), ensure_ascii=False)
+
+    def test_queue_contains_only_non_passing_machine_checkable_rules(self):
+        self.setup_ws(home="/bad")
+        code, out, _ = self.run_pc("--pack", "uiux")
+        self.assertEqual(json.loads(out)["ai_review_items"] > 0, True)
+        q = json.load(open(os.path.join(self.ws, "runs", "2026-08-26", "policy-ai-queue.json"), encoding="utf-8"))
+        ids = [i["rule_id"] for i in q["items"]]
+        self.assertIn("UX-M1", ids)
+        self.assertNotIn("UX-H3", ids)                                   # 사람 응답(attest) 문항은 AI 대상이 아님
+        self.assertEqual(q["items"][0]["priority"], 0)                   # 미충족이 앞에 온다
+        self.assertTrue(q["items"][0]["source_quote"])                   # 원문 근거를 함께 제공
+        self.assertIn("화면", q["how_to"])
+
+    def test_merge_applies_valid_and_rejects_invalid(self):
+        self.setup_ws(home="/bad")
+        self.run_pc("--pack", "uiux")
+        self.judgement([
+            {"pack": "uiux", "rule_id": "UX-M1", "verdict": "충족", "evidence": "화면 최상단에 공식 배너 문구가 보임(스크립트로 나중에 표시됨)", "page": self.base + "/bad", "confidence": "high"},
+            {"pack": "uiux", "rule_id": "UX-M2", "verdict": "미충족", "evidence": "배너 문구가 '웹사이트'로 표기되어 원문과 다름", "page": self.base + "/bad", "confidence": "low"},
+            {"pack": "uiux", "rule_id": "UX-H3", "verdict": "충족", "evidence": "로고가 왼쪽 상단에 있음을 확인했다", "page": self.base + "/bad"},       # attest: 거부
+            {"pack": "uiux", "rule_id": "UX-ZZ", "verdict": "충족", "evidence": "존재하지 않는 규칙에 대한 응답", "page": self.base + "/bad"},               # 없는 규칙: 거부
+            {"pack": "uiux", "rule_id": "UX-H1", "verdict": "충족", "evidence": "짧음", "page": self.base + "/bad"},                                       # 근거 부족: 거부
+            {"pack": "uiux", "rule_id": "UX-H2", "verdict": "충족", "evidence": "alt 확인", "page": ""}])                                                  # URL 없음: 거부
+        code, out, _ = quiet(policy_check.main, ["ai-merge", "--workspace", self.ws, "--date", "2026-08-26"])
+        self.assertEqual(code, 3)                                        # 거부 항목이 있으면 비정상 종료코드
+        res = json.loads(out)
+        self.assertEqual(res["applied"], 2)
+        self.assertEqual(sorted(x["rule_id"] for x in res["rejected"]), ["UX-H1", "UX-H2", "UX-H3", "UX-ZZ"])
+        r, _ = self.results("uiux")
+        self.assertEqual(r["UX-M1"]["auto"], "미충족(자동)")                 # 스크립트 판정은 보존
+        self.assertEqual(r["UX-M1"]["ai"]["verdict"], "충족")
+        self.assertTrue(r["UX-M2"]["ai"]["confidence"] == "low")
+        with open(os.path.join(self.ws, "runs", "2026-08-26", "policy-uiux.csv"), encoding="utf-8-sig") as f:
+            rows = dict((x["규칙ID"], x) for x in csv.DictReader(f))
+        self.assertTrue(rows["UX-M1"]["종합 판정"].startswith("AI 확인: 충족"))
+        self.assertIn("스크립트: 미충족(자동)", rows["UX-M1"]["종합 판정"])      # 두 판정을 함께 보여준다
+        self.assertIn("신뢰도 낮음", rows["UX-M2"]["종합 판정"])
+        self.assertEqual(rows["UX-H3"]["종합 판정"], "사람 응답 필요")
+        md = open(os.path.join(self.ws, "runs", "2026-08-26", "policy-uiux.md"), encoding="utf-8").read()
+        self.assertIn("**AI 확인**", md)
+
+    def test_merge_without_judgement_file(self):
+        self.setup_ws(home="/bad")
+        self.run_pc("--pack", "uiux")
+        code, _, err = quiet(policy_check.main, ["ai-merge", "--workspace", self.ws, "--date", "2026-08-26"])
+        self.assertEqual(code, 1)
+        self.assertIn("policy-ai-judgement.json", err)
 
 
 class StubPageTests(Base):
@@ -202,7 +260,9 @@ class PolicyRuleTests(Base):
         self.assertEqual(code, 0)
         r, d = self.results("policy-week")
         self.assertEqual(len(r), 23)
-        self.assertEqual(r["PW-22"]["auto"], "충족(자동)")                  # 용량·응답시간(근사)
+        self.assertEqual(r["PW-22"]["auto"], "확인 필요(증거 첨부)")          # 용량·응답시간은 근사 측정이라 충족으로 단정하지 않는다(검수 결과 반영)
+        self.assertEqual(r["PW-22"]["suggest"], "")
+        self.assertIn("MB", " ".join(e for c in r["PW-22"]["checks"] for e in c["evidence"]))
         self.assertEqual(r["PW-03"]["auto"], "사람 응답 필요")
         self.assertTrue(r["PW-06"]["auto"].startswith("확인 필요"))          # 외부 링크 점검은 옵트인(기본 꺼짐)
         self.assertEqual(fx.STATE.hits.get("/ext-dead", 0) + fx.STATE.hits.get("/ext-ok", 0), 0)   # 외부 사이트에 요청하지 않음
@@ -235,7 +295,7 @@ class PolicyRuleTests(Base):
         self.setup_ws(settings={"policy": {"check_external_links": True, "max_external_links": 10}})
         self.run_pc("--pack", "policy-week")
         r, _ = self.results("policy-week")
-        self.assertEqual(r["PW-06"]["auto"], "미충족(자동)")
+        self.assertEqual(r["PW-06"]["auto"], "확인 필요(미충족 징후)")          # 일부 페이지만 점검하므로 사이트 전체 단정 불가(검수 결과 반영)
         self.assertIn("ext-dead", " ".join(e for c in r["PW-06"]["checks"] for e in c["evidence"]))
         self.assertGreaterEqual(fx.STATE.hits.get("/ext-dead", 0), 1)
 

@@ -7,6 +7,8 @@
   python scripts/guidelines.py pages uiux --find 건너뛰기          # 키워드가 있는 쪽 찾기
   python scripts/guidelines.py new uiux 2026.08 --from 2025.08    # 새 버전 초안 폴더 생성(모든 규칙 draft)
   python scripts/guidelines.py diff uiux 2025.08 2026.08          # 개정 비교(추가·삭제·변경)
+  python scripts/guidelines.py review-queue uiux                  # AI 규칙 검수 대기열 생성(규칙·원문 쪽·검사 설명)
+  python scripts/guidelines.py review-apply uiux                  # AI 검수 결과(review.json) 반영
   python scripts/guidelines.py use uiux 2026.08                   # 현재 버전 전환(검증 통과 시)
 
 개정 절차 전체는 core/guideline-update.md.
@@ -49,6 +51,8 @@ def load_source_pages(base, meta):
         return None
     t = open(path, encoding="utf-8").read()
     parts = re.split(r"\n## p\.(\d+)\n", t)
+    if len(parts) == 1:          # 쪽 구분이 없는 원문(예: hwpx 본문 추출본)은 전체를 0번 쪽으로 본다
+        return {0: t}
     return dict((int(parts[i]), parts[i + 1]) for i in range(1, len(parts), 2))
 
 
@@ -94,14 +98,15 @@ def validate_pack(gdir, pack, version, all_ids):
         if r.get("needs_review"):
             warns.append("%s: needs_review (개정 초안, 검수 필요)" % rid)
         sp, sq = r.get("source_page"), r.get("source_quote")
-        if sp and sq and pages is not None:
-            if sp not in pages:
+        key = sp if sp is not None else (0 if pages is not None and 0 in pages else None)
+        if sq and pages is not None:
+            if key is None or key not in pages:
                 errs.append("%s: source_page %s 가 원문에 없음" % (rid, sp))
-            elif norm(sq) not in norm(pages[sp]):
-                errs.append("%s: 원문 %d쪽에서 source_quote를 찾지 못함(인용 검증 실패): %s" % (rid, sp, sq[:40]))
-        elif grounded and r.get("status") == "active" and not (sp and sq):
-            errs.append("%s: grounding=required 규칙은 active 상태에 source_page/source_quote가 필요" % rid)
-        elif (sp or sq) and pages is None:
+            elif norm(sq) not in norm(pages[key]):
+                errs.append("%s: 원문%s에서 source_quote를 찾지 못함(인용 검증 실패): %s" % (rid, (" %d쪽" % key) if key else "", sq[:40]))
+        elif grounded and r.get("status") == "active" and not sq:
+            errs.append("%s: grounding=required 규칙은 active 상태에 source_quote(원문 인용)가 필요" % rid)
+        elif sq and pages is None:
             warns.append("%s: 원문이 없어 인용 검증을 건너뜀" % rid)
     for rid in ids:
         if rid in all_ids and all_ids[rid] != pack:
@@ -250,6 +255,93 @@ def cmd_diff(args):
     return 0
 
 
+def _clean_page(b):
+    b = re.sub(r"!\[[^\]]*\]\([^)]*\)\n?", "", b)
+    b = re.sub(r"```text\n?|```", "", b)
+    return re.sub(r"\n\s*\n", "\n", b).strip().strip("-").strip()
+
+
+REVIEW_INSTRUCTIONS = (
+    "각 규칙(item)을 검수해 review.json 을 작성한다. 판정 기준: (1) 규칙 text 가 source_quote 와 source_text(원문 쪽)의 내용을 충실히 반영하는가 — 원문에 없는 요건을 "
+    "덧붙이거나 범위를 넓히지 않았는가. (2) method 가 적절한가: 홈페이지로 확인 가능하고 판정이 명확하면 auto, 증거만 모을 수 있으면 assist, 계획 수립·화면 판단은 attest. "
+    "(3) checks 의 검사 유형(check_doc 설명)이 규칙 요건을 실제로 확인하는가 — 근사이면 hint 에 한계가 적혀 있는가. 거짓 충족·거짓 미충족 위험이 있는가. "
+    "verdict: ok(수정 불필요) / revise(수정 필요, note 에 구체적 수정안) / reject(근거 부족·부적절). 모든 item 에 note(근거 1~2문장)를 쓴다. 추측으로 ok 를 주지 않는다.")
+
+
+def cmd_review_queue(args):
+    gdir = gdir_of(args)
+    idx = ml.load_json(os.path.join(gdir, "index.json"), {"packs": {}})
+    ver = args.version or (idx["packs"].get(args.pack) or {}).get("current")
+    base = os.path.join(gdir, args.pack, ver)
+    meta = ml.load_json(os.path.join(base, "meta.json"), {}) or {}
+    rules = (ml.load_json(os.path.join(base, "rules.json"), {}) or {}).get("rules", [])
+    pages = load_source_pages(base, meta)
+    items = []
+    for r in rules:
+        key = r.get("source_page") if r.get("source_page") is not None else (0 if pages and 0 in pages else None)
+        text = _clean_page(pages[key])[:2500] if pages and key in pages else ""
+        items.append({"id": r["id"], "category": r["category"], "text": r["text"], "method": r["method"], "status": r["status"], "source_ref": r.get("source_ref"),
+                      "source_quote": r.get("source_quote"), "source_text": text, "checks": r.get("checks"), "hint": r.get("hint")})
+    used = set(c["type"] for r in rules for c in (r.get("checks") or []))
+    out = {"pack": args.pack, "version": ver, "instructions": REVIEW_INSTRUCTIONS, "result_schema":
+           {"reviewer": "AI(모델명)", "date": "YYYY-MM-DD", "items": [{"id": "규칙ID", "verdict": "ok|revise|reject", "note": "근거"}]},
+           "check_doc": dict((k, pc.CHECK_DOC.get(k, "")) for k in sorted(used)), "items": items}
+    path = os.path.join(base, "review", "review-queue.json")
+    ml.save_json(path, out)
+    print("검수 대상 %d개 규칙 → %s" % (len(items), path))
+    return 0
+
+
+def cmd_review_apply(args):
+    gdir = gdir_of(args)
+    idx = ml.load_json(os.path.join(gdir, "index.json"), {"packs": {}})
+    ver = args.version or (idx["packs"].get(args.pack) or {}).get("current")
+    base = os.path.join(gdir, args.pack, ver)
+    rp = os.path.join(base, "rules.json")
+    data = ml.load_json(rp)
+    rules = dict((r["id"], r) for r in data["rules"])
+    rev = ml.load_json(args.file or os.path.join(base, "review", "review.json"))
+    if not rev or not rev.get("reviewer") or not rev.get("date"):
+        print("[오류] review.json 에 reviewer, date 가 필요합니다.", file=sys.stderr)
+        return 1
+    errs, seen = [], set()
+    for it in rev.get("items", []):
+        if it.get("id") not in rules:
+            errs.append("알 수 없는 규칙 ID: %s" % it.get("id"))
+        elif it.get("id") in seen:
+            errs.append("중복 검수: %s" % it["id"])
+        elif it.get("verdict") not in ("ok", "revise", "reject"):
+            errs.append("%s: verdict 는 ok/revise/reject" % it["id"])
+        elif len((it.get("note") or "").strip()) < 8:
+            errs.append("%s: note(근거)가 비어 있거나 너무 짧음" % it["id"])
+        seen.add(it.get("id"))
+    missing = [i for i in rules if i not in seen]
+    if missing:
+        errs.append("검수되지 않은 규칙: %s" % ", ".join(missing))
+    if errs:
+        for e in errs:
+            print("[오류] " + e, file=sys.stderr)
+        return 1
+    n = {"ok": 0, "revise": 0, "reject": 0}
+    for it in rev["items"]:
+        r = rules[it["id"]]
+        r["review"] = {"by": rev["reviewer"], "date": rev["date"], "verdict": it["verdict"], "note": it["note"].strip()}
+        n[it["verdict"]] += 1
+        if it["verdict"] == "ok":
+            r.pop("needs_review", None)
+        else:
+            r["status"], r["needs_review"] = "draft", True
+    ml.save_json(rp, data)
+    mp = os.path.join(base, "meta.json")
+    meta = ml.load_json(mp, {}) or {}
+    all_ok = n["revise"] == 0 and n["reject"] == 0
+    meta.update({"reviewed": all_ok, "reviewed_by": rev["reviewer"] if all_ok else meta.get("reviewed_by"), "reviewed_at": rev["date"] if all_ok else meta.get("reviewed_at")})
+    meta.setdefault("human_confirmed", False)
+    ml.save_json(mp, meta)
+    print("검수 반영: ok %d, 수정 필요 %d, 거부 %d → 규칙팩 reviewed=%s (사람 최종 확인 human_confirmed=%s)" % (n["ok"], n["revise"], n["reject"], all_ok, meta["human_confirmed"]))
+    return 0 if all_ok else 3
+
+
 def cmd_use(args):
     gdir = gdir_of(args)
     if args.version not in versions(gdir, args.pack):
@@ -291,6 +383,13 @@ def main(argv=None):
     n.add_argument("pack")
     n.add_argument("version")
     n.add_argument("--from", dest="base", required=True)
+    rq = sub.add_parser("review-queue")
+    rq.add_argument("pack")
+    rq.add_argument("--version", default="")
+    ra = sub.add_parser("review-apply")
+    ra.add_argument("pack")
+    ra.add_argument("--version", default="")
+    ra.add_argument("--file", default="")
     d = sub.add_parser("diff")
     d.add_argument("pack")
     d.add_argument("old")
@@ -300,7 +399,8 @@ def main(argv=None):
     u.add_argument("version")
     u.add_argument("--force", action="store_true")
     args = ap.parse_args(argv)
-    return {"list": cmd_list, "validate": cmd_validate, "pages": cmd_pages, "new": cmd_new, "diff": cmd_diff, "use": cmd_use}[args.cmd](args)
+    return {"list": cmd_list, "validate": cmd_validate, "pages": cmd_pages, "new": cmd_new, "diff": cmd_diff, "use": cmd_use,
+            "review-queue": cmd_review_queue, "review-apply": cmd_review_apply}[args.cmd](args)
 
 
 if __name__ == "__main__":

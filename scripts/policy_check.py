@@ -35,6 +35,36 @@ CHECK_TYPES = {"viewport_meta", "doctype_html5", "charset_meta", "lang_attr", "t
                "external_links_dead", "map_embed", "page_dates", "phone_format", "portal_search",
                "text_matches", "link_text_matches", "order", "region_img_alt", "skip_link_present", "skip_link_first",
                "skip_link_count", "skip_main_first", "skip_target_exists", "link_check"}
+CHECK_DOC = {
+    "viewport_meta": "페이지에 meta viewport 가 있는지(모바일 대응의 최소 흔적). 실제 모바일 화면 동작은 확인하지 못함",
+    "doctype_html5": "문서가 <!DOCTYPE html> 로 시작하는지. 문법 검증(W3C)은 하지 않음",
+    "charset_meta": "문자셋 선언(meta charset 또는 Content-Type)이 있는지",
+    "lang_attr": "html 요소의 lang 속성이 있는지",
+    "title_tag": "페이지 title 이 비어 있지 않은지",
+    "img_alt": "img 태그에 alt 속성이 있는지(빈 값 허용). 대체텍스트의 적절성은 판단하지 않음",
+    "skip_link_present": "상단 링크 20개 안에 '#'로 시작하고 바로가기·건너뛰기 문구를 가진 링크가 있는지(수집한 모든 페이지)",
+    "skip_link_first": "문서의 첫 링크가 건너뛰기 링크인지. 쿠키 배너·모달 예외는 판단하지 못함",
+    "skip_link_count": "상단 15개 링크 중 건너뛰기 링크 개수가 기준 이하인지",
+    "skip_main_first": "첫 건너뛰기 링크의 문구·목적지 id가 본문(main/content)을 가리키는지(근사)",
+    "skip_target_exists": "건너뛰기 링크의 #id 목적지가 문서에 실제 있는지. 목적지 구간의 반복 영역 포함 여부는 판단하지 못함",
+    "deprecated_tags": "font, center, marquee 등 폐기된 HTML 태그 사용 개수",
+    "ie_legacy": "ActiveX·classid·IE 전용 X-UA-Compatible 흔적",
+    "text_contains": "지정 문구가 지정 범위(home/home_top/each_page_top/header/footer/any_page)의 텍스트에 있는지. 변형 문구 힌트 지원",
+    "text_matches": "정규식이 지정 범위 텍스트와 일치하는지({agency_name} 치환 지원)",
+    "link_text_contains": "링크 텍스트에 문구가 있는지",
+    "link_text_matches": "링크 텍스트가 정규식과 일치하는지(범위: header/footer, 모든 페이지 옵션)",
+    "order": "텍스트에서 각 항목이 처음 나타나는 위치의 순서 일치 여부(근사, 시각적 배치는 판단하지 못함)",
+    "region_exists": "header/footer 영역 존재 여부. tag_only 면 해당 HTML 요소 자체, 아니면 class/id 흔적 포함(근사)",
+    "region_img_alt": "영역 내 이미지의 alt 존재·금지 단어 포함 여부. 추적 픽셀·숨김·외부 이미지는 제외. 로고 여부는 구분하지 못함",
+    "link_check": "영역 안 같은 도메인 링크의 단절(404/5xx). 외부 링크는 점검하지 않음",
+    "page_weight": "HTML + 같은 도메인 이미지·스크립트·CSS의 Content-Length 합(근사, 일부 자원 미측정 가능)",
+    "load_time": "HTML 응답 시간(전체 렌더링 시간 아님)",
+    "external_links_dead": "외부 링크 단절(옵트인, 외부 사이트에 HEAD 요청)",
+    "map_embed": "지도 서비스 사용 흔적 페이지 목록(영토 표기 확인은 사람)",
+    "page_dates": "조직도 등에서 갱신일 표기 추출(증거 수집만)",
+    "phone_format": "전화번호 지역번호 유무·팩스 표기(증거 수집만)",
+    "portal_search": "최근 검색 포털 점검 결과 요약 참조",
+}
 METHODS = ("auto", "assist", "attest")
 STATUSES = ("active", "draft")
 MAP_RE = re.compile(r"dapi\.kakao\.com/v2/maps|map\.kakao\.com|openapi\.map\.naver\.com|naveropenapi|maps\.googleapis\.com|"
@@ -562,7 +592,8 @@ def _run_check_inner(chk, ctx):
 
 def evaluate_rule(rule, ctx, answers, version, pack_results):
     res = {"id": rule["id"], "category": rule["category"], "text": rule["text"], "method": rule["method"], "status": rule.get("status", "active"),
-           "source_ref": rule.get("source_ref", ""), "hint": rule.get("hint", ""), "checks": [], "auto": "", "suggest": "", "answer": "", "note": ""}
+           "source_ref": rule.get("source_ref", ""), "source_quote": rule.get("source_quote", ""), "hint": rule.get("hint", ""), "checks": [], "auto": "", "suggest": "",
+           "answer": "", "note": "", "ai": None}
     statuses = []
     for chk in rule.get("checks") or []:
         r = run_check(chk, ctx)
@@ -605,7 +636,24 @@ def evaluate_rule(rule, ctx, answers, version, pack_results):
     return res
 
 
-COLUMNS = ["구분", "점검 항목", "규칙ID", "판정 방식", "자동 판정", "제안 응답", "사람 응답", "근거(증거)", "비고"]
+COLUMNS = ["구분", "점검 항목", "규칙ID", "판정 방식", "자동 판정", "AI 확인", "종합 판정", "제안 응답", "사람 응답", "근거(증거)", "비고"]
+
+
+def ai_text(r):
+    a = r.get("ai")
+    if not a:
+        return ""
+    return "%s (신뢰도 %s): %s [%s]" % (a["verdict"], a.get("confidence", "low"), a["evidence"], a.get("page", ""))
+
+
+def final_label(r):
+    """종합 판정: 사람 응답 문항은 사람 응답, 그 외는 AI 확인이 있으면 AI 확인(+스크립트 판정), 없으면 스크립트 판정."""
+    if r["method"] == "attest":
+        return r["answer"] or "사람 응답 필요"
+    a = r.get("ai")
+    if a:
+        return "AI 확인: %s%s (스크립트: %s)" % (a["verdict"], "" if a.get("confidence") != "low" else ", 신뢰도 낮음", r["auto"])
+    return r["auto"]
 
 
 def write_outputs(outdir, pack, version, meta, results, pages_meta, warnings, today):
@@ -618,14 +666,16 @@ def write_outputs(outdir, pack, version, meta, results, pages_meta, warnings, to
         for r in results:
             ev = " / ".join(e for c in r["checks"] for e in c["evidence"])[:600]
             w.writerow([r["category"], r["text"], r["id"], {"auto": "자동", "assist": "증거 수집", "attest": "사람 확인"}[r["method"]], r["auto"],
-                        r["suggest"], r["answer"], ev, (r["note"] + r["hint"])[:400]])
+                        ai_text(r), final_label(r), r["suggest"], r["answer"], ev, (r["note"] + r["hint"])[:400]])
     from collections import Counter
-    c = Counter(r["auto"].split(":")[-1].strip() for r in results)
+    c = Counter(final_label(r).split(":")[-1].strip().split(" (")[0] for r in results)
     L = ["# %s 점검 결과 (규칙팩 %s %s, %s)\n" % (meta.get("title") or pack, pack, version, today)]
     L.append("- 점검 페이지 %d개 (수집 성공 %d개)" % (len(pages_meta), sum(1 for p in pages_meta if p["ok"])))
     L.append("- 판정: " + ", ".join("%s %d" % kv for kv in c.most_common()))
     if not meta.get("reviewed"):
         L.append("- **주의**: 이 규칙팩은 검수 완료로 표시되지 않았습니다(meta.reviewed=false). 자동 판정은 참고용입니다.")
+    elif meta.get("reviewed_by") and not meta.get("human_confirmed"):
+        L.append("- **주의**: 규칙 검수는 %s가 %s에 완료했으며 사람의 최종 확인 전입니다(meta.human_confirmed=false). 판정은 참고용입니다." % (meta["reviewed_by"], meta.get("reviewed_at", "")))
     for w_ in warnings:
         L.append("- **주의**: " + w_)
     L.append("\n※ 제출용 체크리스트의 네/아니오는 담당자가 확인해 작성합니다. 이 결과는 근거 수집과 참고 판정이며 응답을 대신하지 않습니다.\n")
@@ -636,6 +686,10 @@ def write_outputs(outdir, pack, version, meta, results, pages_meta, warnings, to
             L.append("\n## %s\n" % cat)
         L.append("### %s %s\n- 판정 방식: %s / 자동 판정: **%s**%s%s" % (r["id"], r["text"], {"auto": "자동", "assist": "증거 수집", "attest": "사람 확인"}[r["method"]], r["auto"],
                  (" / 제안: " + r["suggest"]) if r["suggest"] else "", (" / 사람 응답: " + r["answer"]) if r["answer"] else ""))
+        if r.get("ai"):
+            L.append("- **AI 확인**: " + ai_text(r) + (" → 종합: " + final_label(r)))
+        if r.get("source_ref"):
+            L.append("- 근거: 가이드라인 %s" % r["source_ref"])
         for c_ in r["checks"]:
             for e in c_["evidence"][:6]:
                 L.append("  - [%s] %s" % (c_["type"], e))
@@ -645,6 +699,70 @@ def write_outputs(outdir, pack, version, meta, results, pages_meta, warnings, to
     with open(base + ".md", "w", encoding="utf-8") as f:
         f.write("\n".join(L) + "\n")
     return base
+
+
+# ------------------------------------------------------------------ AI 확인 (소스 기준 판정을 화면에서 확인)
+
+AI_HOW_TO = ("각 item 의 pages 를 브라우저로 열어(읽기 전용) 규칙이 요구하는 내용을 **화면에서** 확인한다. 소스에 없어도 스크립트로 나중에 그려지는 요소(배너·푸터 등)는 "
+             "화면에 보일 수 있다. evidence 에는 실제로 본 문구·위치를 구체적으로 쓴다. 보지 못했거나 판단 근거가 없으면 verdict 를 확인불가로 한다. "
+             "사람 응답(attest) 문항에는 응답하지 않는다. 결과는 policy-ai-judgement.json 에 저장한다.")
+AI_SCHEMA = {"model": "사용한 모델/도구", "items": [{"pack": "uiux", "rule_id": "UX-M1", "verdict": "충족|미충족|확인불가", "evidence": "화면에서 본 내용(12자 이상)",
+                                                  "page": "확인한 URL", "screenshot": "파일 경로 또는 null", "confidence": "high|medium|low"}]}
+
+
+def build_ai_items(pack, version, results, pages_meta):
+    items = []
+    for r in results:
+        if r["method"] == "attest" or r["auto"].startswith("충족(자동)"):
+            continue
+        items.append({"pack": pack, "version": version, "rule_id": r["id"], "category": r["category"], "rule": r["text"], "method": r["method"],
+                      "script_result": r["auto"], "evidence": [e for c in r["checks"] for e in c["evidence"]][:8], "source_ref": r.get("source_ref"),
+                      "source_quote": r.get("source_quote"), "hint": r.get("hint"), "pages": pages_meta,
+                      "priority": 0 if "미충족" in r["auto"] else 1})
+    items.sort(key=lambda i: (i["priority"], i["rule_id"]))
+    return items
+
+
+def cmd_ai_merge(args):
+    runs = os.path.join(args.workspace, "runs")
+    day = args.date or next((d for d in sorted(os.listdir(runs), reverse=True) if os.path.exists(os.path.join(runs, d, "policy-ai-queue.json"))), "") if os.path.isdir(runs) else ""
+    if not day:
+        print("[오류] policy-ai-queue.json 이 없습니다. 먼저 점검을 실행하세요.", file=sys.stderr)
+        return 1
+    rd = os.path.join(runs, day)
+    queue = ml.load_json(os.path.join(rd, "policy-ai-queue.json"))
+    judge = ml.load_json(os.path.join(rd, "policy-ai-judgement.json"))
+    if judge is None:
+        print("[오류] %s 가 없습니다. AI 확인 결과를 같은 형식으로 저장하세요(스키마: policy-ai-queue.json 의 result_schema)." % os.path.join(rd, "policy-ai-judgement.json"), file=sys.stderr)
+        return 1
+    allowed = dict(((i["pack"], i["rule_id"]), i) for i in queue["items"])
+    ok, rejected = {}, []
+    for it in judge.get("items", []):
+        key = (it.get("pack"), it.get("rule_id"))
+        why = None
+        if key not in allowed:
+            why = "대기열에 없는 규칙(사람 응답 문항 포함)"
+        elif it.get("verdict") not in ("충족", "미충족", "확인불가"):
+            why = "verdict 는 충족/미충족/확인불가"
+        elif len((it.get("evidence") or "").strip()) < 12:
+            why = "evidence(화면에서 본 내용)가 없거나 너무 짧음"
+        elif not (it.get("page") or "").strip():
+            why = "page(확인한 URL)가 없음"
+        if why:
+            rejected.append({"pack": key[0], "rule_id": key[1], "reason": why})
+            continue
+        ok[key] = {"verdict": it["verdict"], "evidence": it["evidence"].strip(), "page": it["page"], "screenshot": it.get("screenshot"),
+                   "confidence": it.get("confidence") if it.get("confidence") in ("high", "medium", "low") else "low", "by": judge.get("model", "")}
+    for pack in sorted(set(k[0] for k in allowed)):
+        pj = ml.load_json(os.path.join(rd, "policy-%s.json" % pack))
+        if not pj:
+            continue
+        for r in pj["results"]:
+            if (pack, r["id"]) in ok:
+                r["ai"] = ok[(pack, r["id"])]
+        write_outputs(rd, pack, pj["version"], pj["meta"], pj["results"], pj["pages"], pj["warnings"], ml.from_iso(pj["date"]))
+    print(json.dumps({"date": day, "applied": len(ok), "rejected": rejected}, ensure_ascii=False, indent=2))
+    return 0 if not rejected else 3
 
 
 # ------------------------------------------------------------------ 응답 기록
@@ -694,7 +812,8 @@ def cmd_status(args):
 
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("action", nargs="?", default="run", choices=["run", "answer", "status"])
+    ap.add_argument("action", nargs="?", default="run", choices=["run", "answer", "status", "ai-merge"])
+    ap.add_argument("--date", default="", help="ai-merge 대상 실행 날짜(기본: 가장 최근)")
     ap.add_argument("rule_id", nargs="?", default="")
     ap.add_argument("--workspace", default="workspace")
     ap.add_argument("--pack", default="all", help="policy-week | uiux | all")
@@ -711,6 +830,8 @@ def main(argv=None):
         return cmd_answer(args)
     if args.action == "status":
         return cmd_status(args)
+    if args.action == "ai-merge":
+        return cmd_ai_merge(args)
 
     ws = args.workspace
     gdir = guidelines_dir(args.guidelines_dir)
@@ -753,7 +874,7 @@ def main(argv=None):
         warnings.append("수집하지 못한 페이지: %s" % ", ".join("%s(%s)" % (n, pages[n]["status"] or pages[n]["error"]) for n in failed))
     answers = ml.load_json(answers_path(ws), {}) or {}
     outdir = os.path.join(ws, "runs", str(today))
-    pack_results, summary = {}, {}
+    pack_results, summary, ai_items = {}, {}, []
     order = sorted(packs, key=lambda p: any(r.get("pack_ref") for r in loaded[p][1]))   # pack_ref 를 가진 팩은 나중에
     try:
         for pack in order:
@@ -762,10 +883,14 @@ def main(argv=None):
             pack_results[pack] = results
             base = write_outputs(outdir, pack, ver, meta, results, [{"name": p["name"], "url": p["url"], "final_url": p["final_url"], "ok": p["ok"], "status": p["status"], "thin": p.get("thin", False)} for p in pages.values()], warnings, today)
             summary[pack] = {"version": ver, "rules": len(results), "files": base}
+            pm = [{"name": p["name"], "url": p["url"], "final_url": p["final_url"], "rendered": bool(p.get("rendered")), "thin": p.get("thin", False)} for p in pages.values()]
+            ai_items += build_ai_items(pack, ver, results, pm)
     except ml.Blocked as e:
         aborted = True
         print("[중단] %s — 부분 결과" % e, file=sys.stderr)
-    print(json.dumps({"date": str(today), "packs": summary, "pages": len(pages), "requests": fetcher.request_count + ext_fetcher.request_count,
+    if ai_items:
+        ml.save_json(os.path.join(outdir, "policy-ai-queue.json"), {"date": str(today), "how_to": AI_HOW_TO, "result_schema": AI_SCHEMA, "items": ai_items})
+    print(json.dumps({"date": str(today), "packs": summary, "ai_review_items": len(ai_items), "pages": len(pages), "requests": fetcher.request_count + ext_fetcher.request_count,
                       "warnings": warnings, "output_dir": outdir}, ensure_ascii=False, indent=2))
     return 2 if aborted else 0
 

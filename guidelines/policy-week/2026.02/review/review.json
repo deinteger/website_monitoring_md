@@ -1,0 +1,121 @@
+{
+ "reviewer": "AI 에이전트(Claude Code 세션)",
+ "date": "2026-11-11",
+ "items": [
+  {
+   "id": "PW-01",
+   "verdict": "ok",
+   "note": "원문 항목과 일치. 갱신일·전화번호 형식은 증거 수집만 하므로 assist가 적절."
+  },
+  {
+   "id": "PW-02",
+   "verdict": "ok",
+   "note": "원문 항목과 일치. 출처·라이선스 표기 유무만 증거로 수집하므로 assist가 적절."
+  },
+  {
+   "id": "PW-03",
+   "verdict": "ok",
+   "note": "원문 항목과 일치하는 실시 여부 문항이라 attest가 적절. 게시판 점검 결과를 근거 자료로 안내."
+  },
+  {
+   "id": "PW-04",
+   "verdict": "ok",
+   "note": "원문 항목과 일치하는 판단 문항이라 attest가 적절."
+  },
+  {
+   "id": "PW-05",
+   "verdict": "ok",
+   "note": "원문 항목과 일치. 지도 사용 페이지를 찾는 증거 수집이며 영토 표기 확인은 사람이 하므로 assist가 적절."
+  },
+  {
+   "id": "PW-06",
+   "verdict": "ok",
+   "note": "점검 범위가 수집한 대표 페이지뿐이라 '충족(자동)'이 사이트 전체로 오해될 수 있었음. auto에서 assist로 낮추고 hint에 범위 한계 명시(검수 중 수정)."
+  },
+  {
+   "id": "PW-07",
+   "verdict": "ok",
+   "note": "원문 항목과 일치하는 법령 준용 문항이라 attest가 적절."
+  },
+  {
+   "id": "PW-08",
+   "verdict": "ok",
+   "note": "원문 항목과 일치. 글쓰기 화면 확인이 필요해 attest가 적절."
+  },
+  {
+   "id": "PW-09",
+   "verdict": "ok",
+   "note": "원문 항목과 일치. 포털 점검 결과를 참조하는 증거 수집이라 assist가 적절."
+  },
+  {
+   "id": "PW-10",
+   "verdict": "ok",
+   "note": "원문 항목과 일치하는 계획 수립 문항이라 attest가 적절. 접근성 링크 표기는 참고 증거."
+  },
+  {
+   "id": "PW-11",
+   "verdict": "ok",
+   "note": "원문 항목과 일치. 33개 항목 중 일부만 참고 지표로 보며 한계를 hint에 명시해 assist가 적절."
+  },
+  {
+   "id": "PW-12",
+   "verdict": "ok",
+   "note": "원문 항목과 일치하는 평가 실시 문항이라 attest가 적절."
+  },
+  {
+   "id": "PW-13",
+   "verdict": "ok",
+   "note": "원문 항목과 일치하는 계획 수립 문항이라 attest가 적절."
+  },
+  {
+   "id": "PW-14",
+   "verdict": "ok",
+   "note": "원문 항목과 일치. W3C 검증은 외부 서비스라 호출하지 않으며 문서 형식 참고 지표만 수집하므로 assist가 적절."
+  },
+  {
+   "id": "PW-15",
+   "verdict": "ok",
+   "note": "원문 항목과 일치. IE 전용 흔적만 참고 지표로 보므로 assist가 적절."
+  },
+  {
+   "id": "PW-16",
+   "verdict": "ok",
+   "note": "원문 항목과 일치. doctype과 폐기 태그 참고 지표라 assist가 적절."
+  },
+  {
+   "id": "PW-17",
+   "verdict": "ok",
+   "note": "원문 항목과 일치. viewport 유무만 확인하므로 assist가 적절하고 한계를 hint에 명시."
+  },
+  {
+   "id": "PW-18",
+   "verdict": "ok",
+   "note": "원문 항목과 일치하는 계획 수립 문항이라 attest가 적절."
+  },
+  {
+   "id": "PW-19",
+   "verdict": "ok",
+   "note": "원문 항목과 일치. 인용 구절이 짧으나 uiux 규칙팩 결과를 참조하는 assist가 적절."
+  },
+  {
+   "id": "PW-20",
+   "verdict": "ok",
+   "note": "원문 항목과 일치. uiux 규칙팩의 아이덴티티 규칙 결과를 참조하는 assist가 적절."
+  },
+  {
+   "id": "PW-21",
+   "verdict": "ok",
+   "note": "원문 항목과 일치하는 준수 여부 문항이라 attest가 적절."
+  },
+  {
+   "id": "PW-22",
+   "verdict": "ok",
+   "note": "용량·로딩이 근사 측정(HTML과 동일 도메인 자원, HTML 응답 시간)이라 '충족(자동)'이 거짓 충족일 수 있었음. auto에서 assist로 낮추고 hint에 근사 한계 명시(검수 중 수정)."
+  },
+  {
+   "id": "PW-A1",
+   "verdict": "ok",
+   "note": "붙임1 점검표와 일치. 내용 판단이 필요해 attest가 적절하며 AI 보조 점검은 후속 과제로 명시."
+  }
+ ]
+}
