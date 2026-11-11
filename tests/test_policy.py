@@ -466,7 +466,8 @@ class PortalAndSelectionTests(Base):
         self.setup_ws()
         code, out, _ = quiet(run_checks.main, ["--workspace", self.ws, "--checks", "all", "--dry-run"])
         d = json.loads(out)
-        self.assertEqual(d["selected"], ["board", "policy", "uiux", "portal"])
+        self.assertEqual(d["selected"], ["board", "policy", "uiux", "uiux-ai", "portal"])
+        self.assertEqual(len(d["plans"]["uiux_ai"]["pages"]) > 0, True)
         self.assertIn("board", d["plans"])
         self.assertEqual(sum(fx.STATE.hits.values()), 0)
         with mock.patch("builtins.input", return_value="5"):

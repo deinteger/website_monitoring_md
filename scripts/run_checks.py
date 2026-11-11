@@ -8,11 +8,12 @@
   python scripts/run_checks.py --checks policy,portal         # 정책정보 확인주간 + 검색 포털 점검
 
 점검 종류
-  all     전체: board + policy + uiux + portal (+ 설정에서 켠 경우 typo)
+  all     전체: board + policy + uiux + uiux-ai + portal (+ 설정에서 켠 경우 typo)
   board   게시판 점검: 접속·링크 오류, 3개월 최신성, 변경 감지, 현행화 의심·문구(AI 선택)
   typo    게시글 본문 오타 점검(신규 글만, 상한·1회). 게시판 점검 과정에서 수집한다
   policy  정책정보 확인주간 체크리스트 점검 (guidelines/policy-week)
   uiux    범정부 UI/UX 가이드라인 준수 점검 (guidelines/uiux)
+  uiux-ai UI/UX 화면 AI 검토: 일부 페이지(기본 15, --ui-pages 로 지정 가능)를 AI가 화면·가이드라인 원문으로 검토하는 대기열 생성
   portal  검색 포털(구글·네이버·다음) 점검: URL 수집 계획 생성 → 수집한 URL 점검
 
 종료코드: 0 정상, 2 차단·장애 의심 중단(부분 결과), 4 포털 점검에 URL 수집이 필요함, 1 설정 오류·기타 실패
@@ -35,12 +36,14 @@ import monlib as ml  # noqa: E402
 import policy_check  # noqa: E402
 import portal_plan  # noqa: E402
 import run_all  # noqa: E402
+import uiux_review  # noqa: E402
 
 CHECKS = [
     ("board", "게시판 점검", "접속·링크 오류, 3개월 최신성, 변경 감지 (AI 판단은 선택)", "사이트 요청: 목록 수 + 링크", "선택"),
     ("typo", "게시글 본문 오타 점검", "신규 게시글 본문의 맞춤법·띄어쓰기·오탈자 (게시판 점검 과정에서 수집)", "사이트 요청: 신규 글 상세(상한 있음)", "필요"),
     ("policy", "정책정보 확인주간 점검", "체크리스트 22개 항목 + 붙임: 자동 확인·증거 수집, 사람 응답 문항 분리", "사이트 요청: 대표 페이지 최대 8개 + 자원 크기", "불필요"),
     ("uiux", "범정부 UI/UX 가이드라인 점검", "공식 배너·식별자·헤더·푸터·건너뛰기 링크 (원문 쪽 근거)", "사이트 요청: 대표 페이지 최대 8개", "불필요"),
+    ("uiux-ai", "UI/UX 화면 AI 검토(일부 페이지)", "자동 점검이 못 다루는 스타일·컴포넌트 규칙을 AI가 화면·원문으로 검토 (기본 15페이지, 지정 가능)", "사이트 요청: 검토 페이지 수 + 화면 캡처", "필요"),
     ("portal", "검색 포털 점검(구글·네이버·다음)", "site: 검색 결과의 깨진 링크·소프트404·불법 광고 의심", "검색 URL 수집(브라우저) + 결과 URL 점검", "불필요"),
 ]
 ORDER = [c[0] for c in CHECKS]
@@ -51,7 +54,7 @@ def parse_selection(spec, settings):
     sel = []
     for it in items:
         if it == "all":
-            sel += ["board", "policy", "uiux", "portal"] + (["typo"] if (settings.get("typo_check") or {}).get("enabled") else [])
+            sel += ["board", "policy", "uiux", "uiux-ai", "portal"] + (["typo"] if (settings.get("typo_check") or {}).get("enabled") else [])
         elif it in ORDER:
             sel.append(it)
         else:
@@ -110,13 +113,16 @@ def main(argv=None):
     ap.add_argument("--guidelines-dir", default="")
     ap.add_argument("--engines", default="google,naver,daum")
     ap.add_argument("--keywords", default="1-30")
+    ap.add_argument("--render", choices=["off", "auto", "always"], default="auto", help="자바스크립트 렌더링(선택 모듈 Playwright) 사용 방식")
+    ap.add_argument("--ui-sample", type=int, default=15, help="UI/UX 화면 AI 검토 자동 표본 페이지 수")
+    ap.add_argument("--ui-pages", default="", help="UI/UX 화면 AI 검토 대상 페이지 주소(쉼표 구분, 지정 시 자동 표본 미사용)")
     args = ap.parse_args(argv)
 
     if args.list:
         print("선택 가능한 점검 (--checks all|board|typo|policy|uiux|portal, 쉼표로 조합):\n")
         for k, name, desc, net, ai in CHECKS:
             print("%-7s %s\n        %s\n        네트워크: %s / AI: %s\n" % (k, name, desc, net, ai))
-        print("all     전체 = board + policy + uiux + portal (+ typo: settings.json에서 켠 경우)")
+        print("all     전체 = board + policy + uiux + uiux-ai + portal (+ typo: settings.json에서 켠 경우)")
         return 0
     ws = args.workspace
     settings = ml.load_settings(ws)
@@ -147,6 +153,9 @@ def main(argv=None):
         if pk:
             c, o, e = _quiet(policy_check.main, ["--workspace", ws, "--pack", "all" if len(pk) == 2 else pk[0], "--dry-run"] + gflag)
             out["plans"]["policy_uiux"] = _json_of(o) if c == 0 else {"error": e.strip() or o.strip()}
+        if "uiux-ai" in sel:
+            c, o, e = _quiet(uiux_review.main, ["plan", "--workspace", ws, "--dry-run", "--sample", str(args.ui_sample)] + (["--pages", args.ui_pages] if args.ui_pages else []) + gflag)
+            out["plans"]["uiux_ai"] = _json_of(o) if c == 0 else {"error": e.strip() or o.strip()}
         if "portal" in sel:
             ins = portal_inputs(ws)
             if ins:
@@ -170,12 +179,19 @@ def main(argv=None):
             add("typo", "수집 완료(AI 판단 필요)" if code == 0 else "미실시", code, "typo-review-queue.json → 판단은 core/typo-guide.md (judge.py --task typo)")
     pk = [p for p in ("policy-week" if "policy" in sel else "", "uiux" if "uiux" in sel else "") if p]
     if pk:
-        code, o, e = _quiet(policy_check.main, ["--workspace", ws, "--pack", "all" if len(pk) == 2 else pk[0]] + tflag + gflag)
+        code, o, e = _quiet(policy_check.main, ["--workspace", ws, "--pack", "all" if len(pk) == 2 else pk[0], "--render", args.render] + tflag + gflag)
         info = _json_of(o)
         for name, key in (("policy", "policy-week"), ("uiux", "uiux")):
             if name in sel:
                 f = (info.get("packs") or {}).get(key, {}).get("files")
                 add(name, "완료" if code == 0 and f else ("중단" if code == 2 else "실패"), code, ("%s.md" % f) if f else (e.strip() or "결과 없음"))
+    if "uiux-ai" in sel:
+        c, o, e = _quiet(uiux_review.main, ["plan", "--workspace", ws, "--sample", str(args.ui_sample), "--render", "off" if args.render == "off" else "auto"]
+                         + (["--pages", args.ui_pages] if args.ui_pages else []) + tflag + gflag)
+        info = _json_of(o)
+        add("uiux-ai", "AI 검토 대기" if c == 0 else ("중단" if c == 2 else "실패"), 4 if c == 0 else c,
+            ("검토 페이지 %s개(화면 캡처 %s개, 브라우저 확인 필요 %s개) → %s — AI가 core/uiux-review-guide.md 로 검토 후 uiux_review.py merge" % (info.get("pages"), info.get("rendered"), info.get("needs_browser"), info.get("queue")))
+            if c == 0 else (e.strip() or o.strip())[:200])
     if "portal" in sel:
         ins = portal_inputs(ws)
         if not ins:

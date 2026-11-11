@@ -103,7 +103,12 @@ def main():
         f.write(SKILL_MD)
     for d in ("core", "config.example"):
         shutil.copytree(os.path.join(ROOT, d), os.path.join(out, d), ignore=shutil.ignore_patterns("__pycache__"))
-    shutil.copytree(os.path.join(ROOT, "guidelines"), os.path.join(out, "guidelines"), ignore=shutil.ignore_patterns("__pycache__", "source"))
+    def _ign(d, names):   # 가이드라인 원문(source/)은 목차 색인(toc.json)만, 생성된 review-queue.json 은 제외
+        drop = [n for n in names if n in ("__pycache__", "review-queue.json")]
+        if os.path.basename(d) == "source":
+            drop += [n for n in names if n != "toc.json"]
+        return drop
+    shutil.copytree(os.path.join(ROOT, "guidelines"), os.path.join(out, "guidelines"), ignore=_ign)
     os.makedirs(os.path.join(out, "scripts"))
     for f in sorted(os.listdir(os.path.join(ROOT, "scripts"))):
         if f.endswith(".py") and f not in SKIP_SCRIPTS:

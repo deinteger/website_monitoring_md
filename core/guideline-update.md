@@ -25,7 +25,8 @@ guidelines/
    - 지원되는 검사 유형은 `scripts/policy_check.py`의 `CHECK_TYPES`. 새 요건이 기존 유형으로 표현되지 않으면 규칙을 `attest`로 두고 엔진 확장을 별도 과제로 기록한다 (규칙 데이터만으로 새 검사 로직이 생기지는 않는다).
 4. **검증**: `python scripts/guidelines.py validate --pack <팩>` — 스키마, 중복 ID, 검사 유형, 원문 인용을 확인한다.
 5. **개정 비교**: `python scripts/guidelines.py diff <팩> <이전버전> <새버전>` — 추가·삭제·변경·ID 변경 의심을 사람이 검토하고 보고서(월간·확인주간)의 변경 사항으로 쓴다.
-6. **검수 완료 처리**: 사람이 규칙을 검토한 뒤 `needs_review`를 지우고 `status`를 `active`로, `meta.json`의 `reviewed`를 `true`로 바꾼다.
+6. **AI 규칙 검수**: `python scripts/guidelines.py review-queue <팩>`으로 대기열(규칙·원문 쪽·검사 설명)을 만들고, AI가 규칙마다 ① 규칙 문구가 원문 인용에 충실한지 ② `method`가 적절한지 ③ 검사 유형이 요건을 실제로 확인하는지(거짓 충족·거짓 미충족 위험)를 검토해 `review/review.json`(`ok|revise|reject` + 근거)을 쓴다. `revise`는 규칙을 고친 뒤 다시 반영한다. `python scripts/guidelines.py review-apply <팩>`이 결과를 규칙(`review`)과 메타(`reviewed`, `reviewed_by`)에 기록한다(사람 최종 확인 `human_confirmed`는 `false`로 유지되며 결과 보고서에 "AI 검수 완료, 사람 최종 확인 전"으로 표시된다).
+   사람은 검수 결과(`review.json`의 note)를 훑어보고 이상이 없으면 `meta.json`의 `human_confirmed`를 `true`로 바꾼다.
 7. **전환**: `python scripts/guidelines.py use <팩> <새버전>` — 검증 오류나 `needs_review`가 남아 있으면 거부한다. 이어서 git에 커밋·배포한다.
 8. **응답 재확인**: 사람 응답(`policy_check.py answer`)은 응답 당시의 규칙팩 버전과 함께 저장되며, 버전이 바뀌면 "이전 버전 응답: 재확인 필요"로 표시된다.
 

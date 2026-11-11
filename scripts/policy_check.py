@@ -29,6 +29,11 @@ import urllib.parse
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import monlib as ml  # noqa: E402
 
+try:
+    import render as rd
+except Exception:  # pragma: no cover - 선택 모듈
+    rd = None
+
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CHECK_TYPES = {"viewport_meta", "doctype_html5", "charset_meta", "lang_attr", "title_tag", "img_alt", "skip_nav", "deprecated_tags",
                "ie_legacy", "text_contains", "link_text_contains", "region_exists", "page_weight", "load_time",
@@ -126,9 +131,10 @@ def _load_page(name, url, r):
     return p
 
 
-def fetch_pages(plan, fetcher):
+def fetch_pages(plan, fetcher, get_renderer=None, mode="off"):
     """페이지를 수집한다. 자바스크립트·메타 새로고침으로 이동하는 빈 껍데기 페이지는 같은 도메인 안에서 최대 2번 따라간다.
-    그래도 본문이 비어 있으면 thin=True 로 표시해 점검에서 제외(미충족이 아니라 수집 한계)한다."""
+    mode: off(소스만) / auto(본문이 빈 페이지만 렌더링) / always(모든 페이지를 렌더링한 DOM으로 점검). 렌더링은 선택 모듈(Playwright)이며
+    사용할 수 없으면 소스 기준으로 계속하고 사유를 기록한다. 그래도 본문이 비어 있으면 thin=True 로 표시해 점검에서 제외(미충족이 아니라 수집 한계)한다."""
     pages = {}
     for name, url in plan:
         p = _load_page(name, url, fetcher.get(url))
@@ -142,6 +148,20 @@ def fetch_pages(plan, fetcher):
             p = _load_page(name, url, fetcher.get(nxt))
         p["client_redirect"] = chain or None
         p["thin"] = bool(p["ok"] and len(p["text"]) < 200 and not p["links"])
+        p["rendered"], p["render_error"] = False, None
+        if p["ok"] and get_renderer and (mode == "always" or (mode == "auto" and p["thin"])):
+            try:
+                fetcher.throttle()
+                out = get_renderer().fetch(p["final_url"])
+                if out.get("html"):
+                    p["html"] = out["html"]
+                    p["text"], p["links"], p["title"] = ml.html_parse(out["html"])
+                    p["final_url"], p["rendered"] = out.get("final_url") or p["final_url"], True
+                    p["thin"] = bool(len(p["text"]) < 200 and not p["links"])
+                elif out.get("error"):
+                    p["render_error"] = out["error"]
+            except Exception as e:  # RenderUnavailable 포함: 소스 기준으로 계속
+                p["render_error"] = str(e)
         pages[name] = p
     return pages
 
@@ -819,6 +839,8 @@ def main(argv=None):
     ap.add_argument("--pack", default="all", help="policy-week | uiux | all")
     ap.add_argument("--guidelines-dir", default="")
     ap.add_argument("--max-pages", type=int, default=8)
+    ap.add_argument("--render", choices=["off", "auto", "always"], default="auto",
+                    help="자바스크립트로 그려지는 요소 대응(선택 모듈 Playwright): auto=본문이 빈 페이지만, always=모든 페이지를 렌더링한 DOM으로 점검")
     ap.add_argument("--dry-run", action="store_true")
     ap.add_argument("--today", default="")
     ap.add_argument("--yes", action="store_true")
@@ -856,8 +878,20 @@ def main(argv=None):
                          ensure_ascii=False, indent=2))
         return 0
     warnings, aborted = [], False
+    holder = {"r": None}
+
+    def get_renderer():
+        if holder["r"] is None:
+            if rd is None:
+                raise RuntimeError("render 모듈을 불러오지 못함")
+            r = rd.Renderer(settings, fetcher.host_allowed, fetcher.ua)
+            r.start()
+            holder["r"] = r
+        return holder["r"]
     try:
-        pages = fetch_pages(plan, fetcher)
+        pages = fetch_pages(plan, fetcher, get_renderer if args.render != "off" else None, args.render)
+        if holder["r"]:
+            holder["r"].close()
     except ml.Blocked as e:
         print("[중단] %s" % e, file=sys.stderr)
         return 2
@@ -867,6 +901,10 @@ def main(argv=None):
     for n, p in pages.items():
         if p.get("client_redirect"):
             warnings.append("%s: 주소가 스크립트로 이동하는 껍데기 페이지라 이동 후 주소를 점검했습니다 (%s)" % (n, " → ".join(p["client_redirect"])))
+        if p.get("rendered"):
+            warnings.append("%s: 렌더링한 DOM(자바스크립트 실행 후)으로 점검했습니다" % n)
+        if p.get("render_error"):
+            warnings.append("%s: 렌더링을 사용할 수 없어 소스 기준으로 점검했습니다 (%s)" % (n, p["render_error"][:100]))
         if p.get("thin"):
             warnings.append("%s: 본문이 비어 있어 점검에서 제외했습니다(수집 한계, 스크립트 렌더링 페이지 추정)" % n)
     failed = [n for n, p in pages.items() if not p["ok"]]
@@ -881,7 +919,8 @@ def main(argv=None):
             meta, rules, ver, _ = loaded[pack]
             results = [evaluate_rule(r, ctx, answers, ver, pack_results) for r in rules]
             pack_results[pack] = results
-            base = write_outputs(outdir, pack, ver, meta, results, [{"name": p["name"], "url": p["url"], "final_url": p["final_url"], "ok": p["ok"], "status": p["status"], "thin": p.get("thin", False)} for p in pages.values()], warnings, today)
+            base = write_outputs(outdir, pack, ver, meta, results, [{"name": p["name"], "url": p["url"], "final_url": p["final_url"], "ok": p["ok"], "status": p["status"], "thin": p.get("thin", False),
+                                                                "rendered": p.get("rendered", False)} for p in pages.values()], warnings, today)
             summary[pack] = {"version": ver, "rules": len(results), "files": base}
             pm = [{"name": p["name"], "url": p["url"], "final_url": p["final_url"], "rendered": bool(p.get("rendered")), "thin": p.get("thin", False)} for p in pages.values()]
             ai_items += build_ai_items(pack, ver, results, pm)

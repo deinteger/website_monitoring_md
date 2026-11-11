@@ -71,7 +71,8 @@ def validate_pack(gdir, pack, version, all_ids):
     pages = load_source_pages(base, meta)
     grounded = meta.get("grounding") == "required"
     if grounded and pages is None:
-        if os.path.isdir(os.path.join(base, "source")):
+        src_dir = os.path.join(base, "source")
+        if os.path.isdir(src_dir) and not os.path.exists(os.path.join(src_dir, "toc.json")):    # 배포 패키지는 목차(toc.json)만 남긴다
             errs.append("grounding=required 인데 원문(source md)이 없음")
         else:
             warns.append("원문(source/)이 배포되지 않은 패키지라 원문 인용 검증을 건너뜀 (저장소 원본에서는 검증됨)")

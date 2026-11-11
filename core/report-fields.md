@@ -14,6 +14,8 @@
 | `results.jsonl` | collect.py | 게시판별 중간 결과(재개용) |
 | `search-index-links.csv`, `search-index-summary.json` | check_index_links.py | 검색엔진 인덱스 URL 점검 결과 |
 | `policy-<팩>.csv, .md, .json` | policy_check.py | 정책정보 확인주간(`policy-week`)·UI/UX(`uiux`) 체크리스트 결과. 자동 판정·제안 응답·사람 응답·근거 |
+| `policy-ai-queue.json`, `policy-ai-judgement.json` | policy_check.py, AI | 소스 기준 미충족·확인 필요 항목의 AI 화면 확인 대기열과 AI 판정(병합: `ai-merge`) |
+| `uiux-review-queue.json`, `uiux-review.json/.csv/.md` | uiux_review.py, AI | UI/UX 화면 AI 검토 대기열(화면 캡처·계산된 스타일 포함), AI 검토 결과와 병합 보고 |
 | `checks-summary.md, .json` | run_checks.py | 선택한 점검별 상태와 결과 파일 위치 |
 | `typo-review-queue.json` | collect.py --typo-check | 오타 점검 대상 신규 게시글(본문, 마스킹) |
 | `typo-judgement.json` | judge.py --task typo 또는 에이전트 | 게시글 오타 판단(원문 인용 검증됨) |

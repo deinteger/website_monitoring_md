@@ -38,9 +38,10 @@ python scripts/monthly_report.py --workspace workspace --month YYYY-MM         #
 
 ## 점검 범위 선택 (먼저 물어본다)
 
-사용자가 범위를 말하지 않으면 **전체 / 게시판 / 오타 / 정책정보 확인주간 / UI·UX 가이드라인 / 검색 포털** 중 무엇을 할지 먼저 묻는다 (복수 선택 가능).
+사용자가 범위를 말하지 않으면 **전체 / 게시판 / 오타 / 정책정보 확인주간 / UI·UX 가이드라인 / UI·UX 화면 AI 검토 / 검색 포털** 중 무엇을 할지 먼저 묻는다 (복수 선택 가능).
 
 - `python scripts/run_checks.py --workspace workspace --list` (선택지·비용) / `--checks all|board,typo,policy,uiux,portal` / `--dry-run` (요청량)
+- UI/UX 화면 AI 검토(`--checks uiux-ai`): 일부 페이지(기본 15, `--ui-pages`로 지정)를 `core/uiux-review-guide.md`로 검토 → `uiux_review.py merge`(원문 인용 검증). 소스 기준 미충족은 `policy-ai-queue.json`을 화면에서 확인해 `policy_check.py ai-merge`
 - 정책정보 확인주간·UI/UX: 자동(auto)·증거 수집(assist)·사람 응답(attest) 구분. **네/아니오 응답은 사람이 하며 대신 작성하지 않는다** (`policy_check.py answer`)
 - 검색 포털: 계획 생성(종료코드 4) → 브라우저로 URL 수집 → 재실행. 스크립트로 검색엔진을 긁지 않는다
 - 가이드라인 개정 반영: `core/guideline-update.md`, `python scripts/guidelines.py validate|diff|use`

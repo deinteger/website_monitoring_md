@@ -112,5 +112,67 @@ class RenderTests(unittest.TestCase):
         self.assertEqual(code, 1)
 
 
+class PolicyRenderTests(unittest.TestCase):
+    """자바스크립트로 배너·푸터가 그려지는 페이지: 소스 기준으로는 판정 보류, 렌더링하면 점검된다."""
+
+    JSHOME = ('<!DOCTYPE html><html lang="ko"><head><meta charset="utf-8"><title>JS 홈</title></head><body><div id="root"></div><script>'
+              'document.getElementById("root").innerHTML = \'<a href="#m">본문 바로가기</a><div class="masthead">이 누리집은 대한민국 공식 전자정부 누리집입니다.</div>\''
+              ' + \'<main id="m">\' + "긴 본문입니다. ".repeat(40) + \'</main><footer>이 누리집은 모의기관에서 운영하는 누리집입니다.</footer>\';</script></body></html>')
+
+    @classmethod
+    def setUpClass(cls):
+        cls.srv = fx.start()
+        cls.port = cls.srv.server_address[1]
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.srv.shutdown()
+
+    def setUp(self):
+        self.ws = tempfile.mkdtemp()
+        fx.STATE.pages.clear()
+        fx.STATE.pages["/jshome"] = self.JSHOME
+        fx.write_workspace(self.ws, self.port, [{"id": "x", "name": "x", "url": "/jshome", "type": "static"}],
+                           {"render": {"executable_path": CHROMIUM, "no_sandbox": True, "timeout_sec": 20}})
+        pth = os.path.join(self.ws, "site-profile.json")
+        prof = json.load(open(pth, encoding="utf-8"))
+        prof["policy"] = {"home_url": "http://127.0.0.1:%d/jshome" % self.port}
+        json.dump(prof, open(pth, "w", encoding="utf-8"), ensure_ascii=False)
+
+    def tearDown(self):
+        shutil.rmtree(self.ws, ignore_errors=True)
+
+    def run_uiux(self, render):
+        import policy_check
+        buf = io.StringIO()
+        with contextlib.redirect_stdout(buf), contextlib.redirect_stderr(buf):
+            policy_check.main(["--workspace", self.ws, "--pack", "uiux", "--render", render, "--today", "2026-08-26"])
+        d = json.load(open(os.path.join(self.ws, "runs", "2026-08-26", "policy-uiux.json"), encoding="utf-8"))
+        return dict((r["id"], r["auto"]) for r in d["results"]), d
+
+    def test_static_source_is_held_back_not_failed(self):
+        res, d = self.run_uiux("off")
+        self.assertTrue(res["UX-M2"].startswith("확인 필요"))                # 소스에 내용이 없어도 '미충족'으로 단정하지 않는다
+        self.assertNotIn("미충족", res["UX-M2"])
+
+    @unittest.skipUnless(HAVE_PW and CHROMIUM, "playwright/chromium 없음")
+    def test_render_auto_evaluates_dom_after_javascript(self):
+        res, d = self.run_uiux("auto")
+        self.assertEqual(res["UX-M2"], "충족(자동)")                         # 렌더링한 DOM에서 배너 문구 확인
+        self.assertEqual(res["UX-I1"], "충족(자동)")
+        self.assertEqual(res["UX-F1"], "충족(자동)")
+        self.assertTrue([p for p in d["pages"] if p["name"] == "home"][0]["rendered"])
+        self.assertTrue(any("렌더링한 DOM" in w for w in d["warnings"]))
+
+    def test_render_unavailable_falls_back_to_source_with_reason(self):
+        sp = os.path.join(self.ws, "settings.json")
+        st = json.load(open(sp, encoding="utf-8"))
+        st["render"] = {"executable_path": "/nonexistent/chrome", "no_sandbox": True}
+        json.dump(st, open(sp, "w", encoding="utf-8"))
+        res, d = self.run_uiux("auto")
+        self.assertTrue(res["UX-M2"].startswith("확인 필요"))
+        self.assertTrue(any("렌더링을 사용할 수 없어" in w for w in d["warnings"]))
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -258,6 +258,27 @@ class ReleaseTests(unittest.TestCase):
         finally:
             shutil.rmtree(d)
 
+    def test_release_package_runs_demo_standalone(self):
+        """회귀: 배포 패키지(원문 제외)에서 데모가 끝까지 구동되어야 한다(심사위원 구동 환경). uiux-ai 가 목차를 못 찾아 실패하던 결함."""
+        import subprocess
+        code, _ = quiet(make_release.main)
+        self.assertEqual(code, 0)
+        out = os.path.join(make_release.ROOT, "dist", "website-monitoring-kit-v%s" % ml.VERSION)
+        self.assertTrue(os.path.exists(os.path.join(out, "guidelines", "uiux", "2025.08", "source", "toc.json")))
+        self.assertFalse(os.path.exists(os.path.join(out, "guidelines", "uiux", "2025.08", "source", "guideline.md")))     # 원문 전체는 제외
+        self.assertFalse(os.path.exists(os.path.join(out, "guidelines", "uiux", "2025.08", "review", "review-queue.json")))  # 원문 발췌 포함 파일 제외
+        ws = os.path.join(tempfile.mkdtemp(), "demo")
+        try:
+            r = subprocess.run([sys.executable, os.path.join(out, "scripts", "demo.py"), "--workspace", ws], cwd=out, capture_output=True, timeout=120)
+            text = r.stdout.decode("utf-8", "replace")
+            self.assertEqual(r.returncode, 0, text + r.stderr.decode("utf-8", "replace"))
+            self.assertIn("게시글 오타 점검: 8건 점검, 지적 3건", text)
+            self.assertTrue(os.path.exists(os.path.join(ws, "runs", ml.iso(__import__("datetime").date.today()), "uiux-review-queue.json")))
+            v = subprocess.run([sys.executable, os.path.join(out, "scripts", "guidelines.py"), "validate"], cwd=out, capture_output=True, timeout=60)
+            self.assertEqual(v.returncode, 0, v.stdout.decode("utf-8", "replace"))                  # 패키지에서도 검증 통과(인용 검증은 경고로 건너뜀)
+        finally:
+            shutil.rmtree(os.path.dirname(ws), ignore_errors=True)
+
     def test_release_excludes_workspace_data(self):
         ws_marker = os.path.join(make_release.ROOT, "workspace", "zz_private_marker.txt")
         with open(ws_marker, "w") as f:

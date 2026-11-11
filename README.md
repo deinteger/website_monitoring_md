@@ -36,6 +36,8 @@ history/*.json ─▶ monthly_report.py ─▶ 월간 보고(신규 콘텐츠·�
 | 점검 범위 선택 | `run_checks.py --list/--checks/--interactive` — 전체·게시판·오타·정책정보 확인주간·UI/UX·검색 포털 |
 | 정책정보 확인주간 점검 | `policy_check.py` — 체크리스트 22개 항목: 자동·증거 수집·사람 응답 구분, 응답 기록 |
 | 범정부 UI/UX 가이드라인 점검 | 원문 쪽 근거 규칙 24개(공식 배너·식별자·헤더·푸터·건너뛰기 링크), 개정판은 git으로 갱신(`guidelines.py`) |
+| UI/UX 화면 AI 검토 | `uiux_review.py plan/merge` — 일부 페이지(기본 15개·지정 가능)를 AI가 화면·가이드라인 원문으로 검토, 원문 인용 검증 |
+| AI 확인·AI 규칙 검수 | 소스 기준 미충족을 AI가 화면에서 재확인(`policy_check.py ai-merge`), 규칙 검수도 AI가 수행(`guidelines.py review-*`) |
 | 주기 실행 | `make_schedule.py` — Windows/cron 등록 명령 생성 |
 
 ## 사용 환경

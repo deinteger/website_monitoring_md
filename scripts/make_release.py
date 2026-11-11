@@ -28,18 +28,26 @@ ALLOWED_HOSTS = {"example.go.kr", "www.example.go.kr", "example.com", "www.examp
 TEXT_EXT = (".md", ".py", ".json", ".txt", ".csv", ".html", ".gitignore", "")
 
 
-def collect_files():
+def collect_files(with_source=False, with_images=False):
+    """허용 목록 파일을 모은다. 가이드라인 원문(source/)은 기본적으로 목차 색인(toc.json)만 포함한다(UI/UX 화면 검토가 목차를 읽는다).
+    with_source: 원문 md·README 도 포함, with_images: 쪽 이미지(약 34MB)까지 포함. 생성된 review-queue.json 은 원문 발췌를 담고 있어 항상 제외."""
     for item in ALLOW:
         p = os.path.join(ROOT, item)
         if os.path.isfile(p):
             yield item
         elif os.path.isdir(p):
             for d, dirs, files in os.walk(p):
-                dirs[:] = [x for x in dirs if x not in ("__pycache__", ".pytest_cache")
-                           and not (x == "source" and os.sep + "guidelines" + os.sep in d + os.sep)]   # 가이드라인 원문(대용량)은 배포 제외
+                dirs[:] = [x for x in dirs if x not in ("__pycache__", ".pytest_cache")]
+                in_source = os.path.basename(d) == "source" and os.sep + "guidelines" + os.sep in d + os.sep
+                in_images = os.sep + "source" + os.sep in d + os.sep and os.path.basename(d) != "source" and os.sep + "guidelines" + os.sep in d + os.sep
                 for f in files:
-                    if not f.endswith((".pyc", ".tmp")):
-                        yield os.path.relpath(os.path.join(d, f), ROOT)
+                    if f.endswith((".pyc", ".tmp")) or f == "review-queue.json":
+                        continue
+                    if in_images and not with_images:
+                        continue
+                    if in_source and not with_source and f != "toc.json":
+                        continue
+                    yield os.path.relpath(os.path.join(d, f), ROOT)
 
 
 def scan_hosts(base, files):
@@ -59,13 +67,18 @@ def scan_hosts(base, files):
     return bad
 
 
-def main():
+def main(argv=()):
+    import argparse
+    ap = argparse.ArgumentParser(description=__doc__)
+    ap.add_argument("--with-guideline-source", action="store_true", help="가이드라인 원문 md를 포함(이용 조건 확인 후)")
+    ap.add_argument("--with-images", action="store_true", help="가이드라인 쪽 이미지(약 34MB)까지 포함")
+    args = ap.parse_args(argv)
     name = "website-monitoring-kit-v%s" % ml.VERSION
     dist = os.path.join(ROOT, "dist")
     out = os.path.join(dist, name)
     if os.path.exists(out):
         shutil.rmtree(out)
-    files = sorted(set(collect_files()))
+    files = sorted(set(collect_files(args.with_guideline_source or args.with_images, args.with_images)))
     for rel in files:
         dst = os.path.join(out, rel)
         os.makedirs(os.path.dirname(dst), exist_ok=True)
@@ -94,4 +107,4 @@ def main():
 
 if __name__ == "__main__":
     ml.setup_stdio()
-    sys.exit(main())
+    sys.exit(main(sys.argv[1:]))

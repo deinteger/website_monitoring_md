@@ -99,16 +99,18 @@ python scripts/monthly_report.py --workspace workspace --month YYYY-MM
 
 | 선택 | 내용 | 명령 |
 | --- | --- | --- |
-| 전체 | 게시판 + 정책정보 확인주간 + UI/UX + 검색 포털 | `python scripts/run_checks.py --workspace workspace --checks all` |
+| 전체 | 게시판 + 정책정보 확인주간 + UI/UX + UI/UX 화면 AI 검토 + 검색 포털 | `python scripts/run_checks.py --workspace workspace --checks all` |
 | 게시판 | 접속·링크 오류, 3개월 최신성, 변경 감지 | `--checks board` (모드: `--mode incremental|full`) |
 | 오타 | 신규 게시글 본문 맞춤법·오탈자 (AI 판단) | `--checks typo` (게시판 점검과 함께 수집) |
 | 정책정보 확인주간 | 체크리스트 22개 항목: 자동 확인·증거 수집, 사람 응답 문항 분리 | `--checks policy` |
-| UI/UX | 범정부 UI/UX 가이드라인(공식 배너·식별자·헤더·푸터·건너뛰기 링크) | `--checks uiux` |
+| UI/UX | 범정부 UI/UX 가이드라인(공식 배너·식별자·헤더·푸터·건너뛰기 링크) 자동 점검 | `--checks uiux` |
+| UI/UX 화면 AI 검토 | 자동 점검이 못 다루는 스타일·컴포넌트 규칙을 **일부 페이지(기본 15개, `--ui-pages`로 지정 가능)**에서 AI가 화면·가이드라인 원문으로 검토 | `--checks uiux-ai` → AI가 `core/uiux-review-guide.md`로 검토 → `python scripts/uiux_review.py merge` |
 | 검색 포털 | 구글·네이버·다음 `site:` 결과의 깨진 링크·소프트404·불법 광고 의심 | `--checks portal` |
 
 - 목록과 비용은 `--list`, 요청량은 `--dry-run`으로 먼저 확인한다 (보안 통보에 쓴다). 터미널 사용자는 `--interactive`로 번호를 고를 수 있다.
 - **검색 포털**: 스크립트는 검색 계획(`workspace/index/plan.md`)만 만든다(종료코드 4). 에이전트 브라우저로 `site:도메인 [키워드]`를 검색해 결과를 `workspace/index/<엔진>.txt`(`URL<탭>제목<탭>키워드`)에 저장한 뒤 같은 명령을 다시 실행하면 점검한다. 검색엔진을 스크립트로 직접 긁지 않고, 캡차·차단 시 중단한다.
 - **정책정보 확인주간·UI/UX 결과 해석**: 판정 방식이 `auto`인 항목만 자동 판정이고, `assist`는 증거 수집(충족이라고 단정하지 않음), `attest`는 **사람이 네/아니오로 응답**한다. 응답 기록: `python scripts/policy_check.py answer PW-03 --yes --note "..."`, 현황: `policy_check.py status`. 사람 응답을 대신 작성하지 않는다.
+- **AI 확인**: 소스 기준 `미충족`·`확인 필요` 항목은 `policy-ai-queue.json`에 담긴다. AI가 브라우저로 화면에서 확인해 `policy-ai-judgement.json`(스키마는 큐의 `result_schema`)을 쓰고 `python scripts/policy_check.py ai-merge`로 병합한다. 결과는 'AI 확인'·'종합 판정' 열에 스크립트 판정과 함께 표시된다. **사람 응답(attest) 문항에는 AI가 응답하지 않는다.** 자바스크립트로 그려지는 요소는 먼저 `--render auto|always`(선택 모듈 Playwright)로 줄일 수 있다.
 - 규칙이 `검수 전(draft)`이거나 규칙팩이 `reviewed=false`이면 결과는 참고용이라고 사용자에게 알린다.
 - 가이드라인 개정 반영: `core/guideline-update.md` (규칙 데이터는 `guidelines/`, 근거 인용 검증 포함).
 

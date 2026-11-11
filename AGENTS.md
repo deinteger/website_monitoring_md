@@ -35,7 +35,10 @@ python scripts/lookup.py --workspace workspace status|overview|find|contact <이
 python scripts/collect.py --workspace workspace --typo-check           # 신규 게시글 본문 오타 점검 대상 수집
 python scripts/run_checks.py --workspace workspace --list              # 점검 범위 선택지 (전체/게시판/오타/정책정보/UIUX/포털)
 python scripts/run_checks.py --workspace workspace --checks policy,uiux
-python scripts/guidelines.py validate|diff|use                          # 가이드라인 규칙팩 관리(개정 반영)
+python scripts/uiux_review.py plan --workspace workspace --sample 15   # UI/UX 화면 AI 검토 대기열(일부 페이지, --pages 로 지정)
+python scripts/uiux_review.py merge --workspace workspace              # AI 검토 결과 병합(원문 인용 검증)
+python scripts/policy_check.py ai-merge --workspace workspace          # 소스 기준 미충족에 대한 AI 화면 확인 병합
+python scripts/guidelines.py validate|diff|use|review-queue|review-apply   # 가이드라인 규칙팩 관리(개정 반영, AI 규칙 검수)
 ```
 
 ## 지켜야 할 것
