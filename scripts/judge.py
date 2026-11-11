@@ -76,6 +76,14 @@ def call_llm(system, user, cfg):
                         {"model": cfg["model"], "max_tokens": 4096, "temperature": 0, "system": system,
                          "messages": [{"role": "user", "content": user}]})
         return "".join(b.get("text", "") for b in out.get("content", []))
+    if provider in ("openai-responses", "responses"):
+        base = cfg["base_url"] or "https://api.openai.com/v1"
+        out = post_json(base.rstrip("/") + "/responses", {"Authorization": "Bearer " + cfg["api_key"]},
+                        {"model": cfg["model"], "instructions": system, "input": user})
+        if out.get("output_text"):
+            return out["output_text"]
+        return "".join(c.get("text", "") for it in out.get("output", []) if it.get("type") == "message"
+                       for c in it.get("content", []) if c.get("type") in ("output_text", "text"))
     base = cfg["base_url"] or "https://api.openai.com/v1"
     out = post_json(base.rstrip("/") + "/chat/completions", {"Authorization": "Bearer " + cfg["api_key"]},
                     {"model": cfg["model"], "temperature": 0,

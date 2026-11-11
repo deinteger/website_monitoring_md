@@ -19,7 +19,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import monlib as ml  # noqa: E402
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-ALLOW = ["SKILL.md", "AGENTS.md", "CLAUDE.md", "README.md", ".gitignore", "run_demo.sh", "run_demo.bat", "core", "docs", "scripts", "config.example", "tests",
+ALLOW = ["SKILL.md", "AGENTS.md", "CLAUDE.md", "GEMINI.md", "README.md", ".gitignore", "run_demo.sh", "run_demo.bat", "core", "docs", "scripts", "config.example", "tests",
          ".agents/skills", ".agents/rules", ".agents/workflows", ".claude/skills", ".clinerules", "guidelines"]
 ALLOWED_HOSTS = {"example.go.kr", "www.example.go.kr", "example.com", "www.example.com", "127.0.0.1", "localhost",
                  "api.openai.com", "api.anthropic.com", "claude.ai", "github.com", "pi.dev", "onorca.dev", "www.onorca.dev",

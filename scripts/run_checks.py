@@ -210,6 +210,7 @@ def main(argv=None):
     L += ["| %s | %s | %s |" % (r["check"], r["status"], r["detail"].replace("|", "\\|")) for r in results]
     open(os.path.join(outdir, "checks-summary.md"), "w", encoding="utf-8").write("\n".join(L) + "\n")
     print("\n".join(L))
+    print("\n결과 파일 위치(이 PC 로컬, 외부로 전송·커밋되지 않음): %s" % os.path.abspath(outdir), file=sys.stderr)
     codes = [r["exit_code"] for r in results]
     if 2 in codes:
         return 2
