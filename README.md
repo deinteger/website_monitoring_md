@@ -122,7 +122,7 @@ python scripts/monthly_report.py --workspace workspace --month 2026-09
 | `.agents/`, `.claude/`, `.clinerules/` | 에이전트별 얇은 어댑터(스킬·워크플로·규칙 요약) |
 | `docs/` | 운영 가이드, 보안 통보 양식, pi·Orca 사용법 |
 | `tests/` | 테스트와 AI 판단 평가 세트 |
-| `workspace/` | 담당자별 데이터 (커밋 대상 아님). `workspace/legacy/`는 이전 점검 원본(내부용) |
+| `workspace/` | 담당자별 데이터 (커밋 대상 아님) |
 
 ## 개발·배포
 
