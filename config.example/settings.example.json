@@ -19,5 +19,13 @@
     "provider": "openai",
     "base_url": "",
     "model": ""
-  }
+  },
+  "js_fallback": "agent",
+  "render": {
+    "timeout_sec": 30,
+    "block_resources": true,
+    "executable_path": "",
+    "no_sandbox": false
+  },
+  "_js_fallback설명": "목록을 못 읽은 게시판 처리: agent(기본, 에이전트 브라우저로 확인) | playwright(자동 렌더링, 별도 설치 필요)"
 }

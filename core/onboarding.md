@@ -40,7 +40,7 @@ python scripts/discover.py --workspace workspace --base-url https://대상주소
    - `region_found`가 `false`이면 `region`(`{"tag":"table","class":"..."}` 또는 `{"tag":"div","id":"..."}`)을 보정
    - 날짜가 다른 열(예: 행사일)을 잡으면 `date_regex`(연·월·일 3그룹 정규식) 또는 `"date_source": "any"` 사용
    - 목록 항목이 `tr`/`li`가 아니면 `row_tag`/`row_class` 지정
-   - 게시판이 JS로 그려져 소스에 글이 없으면 스크립트가 못 읽는다 → 해당 항목은 `reasons`에 `js_suspected`로 남고 브라우저 확인 대상이 된다. 가능하면 같은 데이터를 주는 목록 URL(예: 서버 렌더링 주소)을 찾아 `url`에 넣는다.
+   - 게시판이 JS로 그려져 소스에 글이 없으면(`js_suspected`) 스크립트가 못 읽는다. 선택: (A) 그대로 두어 에이전트 브라우저로 확인(기본), (B) 같은 목록을 HTML로 주는 서버 렌더링 URL을 찾아 `url`에 입력, (C) 해당 게시판에 `"render": "playwright"` 지정(별도 설치 필요). 자세한 비교는 `docs/운영가이드.md` 9절.
    - 월별 신규 콘텐츠 집계가 필요한 게시판은 최근 글이 첫 쪽에 충분히 담기는지 확인하고, 부족하면 `pages`와 `page_url_template`(`{page}` 포함)를 지정한다.
 7. 저장: 검수한 파일을 `workspace/site-profile.json`으로 저장한다 (`draft`는 삭제).
 

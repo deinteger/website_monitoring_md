@@ -6,6 +6,15 @@ import threading
 import zlib
 
 
+def js_board(rows):
+    """소스에는 글이 없고 스크립트가 표를 만드는 페이지(자바스크립트 렌더링 게시판 흉내)."""
+    data = json.dumps(rows, ensure_ascii=False)
+    return ('<html><head><title>JS 목록</title><script>var a=1;</script><script>var b=2;</script></head><body>'
+            '<div id="app"></div><script>var rows=%s;var h="<table class=\\"board\\">";'
+            'rows.forEach(function(r,i){h+="<tr><td>"+(i+1)+"</td><td><a href=\\"/view/"+(i+1)+"\\">"+r[0]+"</a></td><td>"+r[1]+"</td></tr>";});'
+            'h+="</table>";document.getElementById("app").innerHTML=h;</script></body></html>' % data)
+
+
 def board(rows, attach=""):
     trs = "".join('<tr><td>%d</td><td><a href="/view/%d">%s</a></td><td>%s</td><td>조회 %d</td></tr>'
                   % (i, zlib.crc32(t.encode("utf-8")), t, d, 100 + i) for i, (t, d) in enumerate(rows, 1))

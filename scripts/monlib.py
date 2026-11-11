@@ -41,6 +41,8 @@ DEFAULT_SETTINGS = {
     "max_links_per_board": 15,
     "link_check_interval_days": 7,
     "full_every_days": 30,          # 마지막 전체 점검 후 이 기간이 지나면 full 권장 경고
+    "js_fallback": "agent",         # 목록을 못 읽은 게시판(js_suspected) 처리: agent(에이전트 브라우저 확인) | playwright(자동 렌더링)
+    "render": {"timeout_sec": 30, "block_resources": True, "executable_path": "", "no_sandbox": False, "wait_after_load_ms": 300},
     "excerpt_chars": 1500,
     "seen_posts_cap": 3000,
     "llm": {"allowed": False},
@@ -404,6 +406,10 @@ class Fetcher(object):
         host = (urllib.parse.urlsplit(url).hostname or "").lower()
         return (not self.allowed) or host in self.allowed
 
+    def throttle(self):
+        """외부(브라우저 렌더링 등)에서도 같은 요청 간격을 지키기 위해 호출한다."""
+        self._wait()
+
     def _wait(self):
         with self._lock:
             now = time.monotonic()
@@ -523,6 +529,8 @@ def load_profile(workspace):
         b.setdefault("system", prof.get("site_name", ""))
         b.setdefault("type", "board")
         b.setdefault("owner", "")
+        if b.get("render") not in (None, "", "playwright"):
+            raise ProfileError("render 값 오류(%s): %s (playwright 만 허용)" % (b["id"], b["render"]))
         b["cycle"] = CYCLE_ALIASES.get(b.get("cycle", "weekly"), b.get("cycle", "weekly"))
         if b["cycle"] not in ("daily", "weekly", "monthly", "quarterly"):
             raise ProfileError("cycle 값 오류(%s): %s" % (b["id"], b["cycle"]))

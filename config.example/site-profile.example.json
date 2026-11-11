@@ -1,7 +1,9 @@
 {
   "site_name": "예시 시스템",
   "base_url": "https://www.example.go.kr/",
-  "allowed_domains": ["www.example.go.kr"],
+  "allowed_domains": [
+    "www.example.go.kr"
+  ],
   "boards": [
     {
       "id": "notice",
@@ -11,7 +13,10 @@
       "type": "board",
       "cycle": "daily",
       "owner": "총무과",
-      "region": {"tag": "table", "class": "board-list"},
+      "region": {
+        "tag": "table",
+        "class": "board-list"
+      },
       "row_tag": "tr"
     },
     {
@@ -22,7 +27,10 @@
       "type": "board",
       "cycle": "weekly",
       "owner": "홍보담당관",
-      "region": {"tag": "ul", "id": "pressList"},
+      "region": {
+        "tag": "ul",
+        "id": "pressList"
+      },
       "row_tag": "li",
       "pages": 3,
       "page_url_template": "https://www.example.go.kr/board/press.do?page={page}"
@@ -60,6 +68,17 @@
       "url": "https://www.example.go.kr/popup.do",
       "exclude": true,
       "exclude_reason": "로그인 필요 화면"
+    },
+    {
+      "id": "js-board",
+      "name": "JS 목록 게시판 예시",
+      "system": "대표 홈페이지",
+      "url": "https://www.example.go.kr/board/js-list.do",
+      "type": "board",
+      "cycle": "weekly",
+      "owner": "홍보담당관",
+      "render": "playwright",
+      "render_wait": "table.board tr"
     }
   ],
   "_설명": {
@@ -73,6 +92,7 @@
     "recency_exempt": "연례 간행물·아카이브. 최신성 판정에서 제외",
     "exclude": "점검 제외 (접속하지 않음)",
     "pages/page_url_template": "월별 신규 콘텐츠 집계용으로 목록을 여러 쪽 수집할 때 ({page} 포함)",
-    "owner": "담당부서 (월간 보고의 부서별 현황에 사용)"
+    "owner": "담당부서 (월간 보고의 부서별 현황에 사용)",
+    "render": "playwright 지정 시 이 게시판만 브라우저로 렌더링(선택 모듈, 별도 설치). render_wait=렌더링 완료를 기다릴 CSS 선택자"
   }
 }

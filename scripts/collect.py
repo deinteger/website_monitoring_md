@@ -31,6 +31,11 @@ from collections import Counter
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import monlib as ml  # noqa: E402
 
+try:
+    import render as rd
+except Exception:  # pragma: no cover - 선택 모듈
+    rd = None
+
 ERROR_STATUSES = ("404오류", "500오류", "접속오류", "리다이렉트오류")
 OK_FETCH = range(200, 400)
 
@@ -154,6 +159,37 @@ def check_links(parsed, base_url, fetcher, settings):
     return errors, len(targets)
 
 
+def get_renderer(ctx):
+    """선택 모듈 Renderer 를 필요할 때 한 번만 만든다. 사용 불가면 RenderUnavailable."""
+    with ctx.render_lock:
+        if ctx.renderer is None and ctx.render_error is None:
+            if rd is None:
+                ctx.render_error = "render 모듈을 불러오지 못함"
+            else:
+                r = rd.Renderer(ctx.settings, ctx.fetcher.host_allowed, ctx.fetcher.ua)
+                try:
+                    r.start()
+                    ctx.renderer = r
+                except rd.RenderUnavailable as e:
+                    ctx.render_error = str(e)
+                    sys.stderr.write("[안내] 렌더링 불가: %s\n" % e)
+        if ctx.render_error:
+            raise rd.RenderUnavailable(ctx.render_error) if rd else RuntimeError(ctx.render_error)
+        return ctx.renderer
+
+
+def rendered_fetch(url, board, ctx):
+    """Playwright 로 렌더링해 FetchResult 형태로 돌려준다 (요청 간격은 Fetcher 와 공유)."""
+    r = get_renderer(ctx)
+    ctx.fetcher.throttle()
+    out = r.fetch(url, board.get("render_wait"))
+    fr = ml.FetchResult(url)
+    fr.status, fr.final_url, fr.error = out["status"], out["final_url"], out["error"]
+    fr.headers = {"Content-Type": "text/html; charset=utf-8"}
+    fr.body = (out["html"] or "").encode("utf-8")
+    return fr
+
+
 def process_board(board, prev, ctx):
     s, today, f = ctx.settings, ctx.today, ctx.fetcher
     res = {"id": board["id"], "name": board["name"], "system": board["system"], "url": board["url"],
@@ -169,7 +205,17 @@ def process_board(board, prev, ctx):
         if not f.host_allowed(url):
             res["fetch_error"] = "허용 도메인 아님: %s" % url
             break
-        r = f.get(url)
+        want_render = board.get("render") == "playwright"
+        if want_render:
+            try:
+                r = rendered_fetch(url, board, ctx)
+                res["rendered"] = True
+            except Exception as e:
+                res["reasons"].append("render_unavailable")
+                res["date_note"] = "렌더링 불가: %s" % e
+                r = f.get(url)
+        else:
+            r = f.get(url)
         if page == 1:
             res.update(fetch_status=r.status, fetch_error=r.error, final_url=r.final_url)
             orig = urllib.parse.urlsplit(board["url"])
@@ -187,6 +233,18 @@ def process_board(board, prev, ctx):
             break
         html = ml.decode_body(r.body, r.headers.get("Content-Type", ""))
         parsed = ml.parse_list_page(html, r.final_url, board)
+        # 자동 보완: 정적 수집으로 목록을 못 읽었으면 렌더링으로 한 번 더 시도 (설정 시)
+        if (page == 1 and ctx.settings.get("js_fallback") == "playwright" and not res.get("rendered")
+                and board["type"] == "board" and not parsed["rows"] and not parsed["dates"]):
+            try:
+                r2 = rendered_fetch(url, board, ctx)
+                if r2.ok:
+                    parsed = ml.parse_list_page(ml.decode_body(r2.body, r2.headers.get("Content-Type", "")), r2.final_url, board)
+                    res["rendered"] = True
+                    res["final_url"] = r2.final_url
+            except Exception as e:
+                res["reasons"].append("render_unavailable")
+                res["date_note"] = "렌더링 불가: %s" % e
         if page == 1:
             parsed_first = parsed
         rows.extend(parsed["rows"])
@@ -343,6 +401,7 @@ def main(argv=None):
     _LINK_CACHE.clear()
     ctx = Ctx()
     ctx.settings, ctx.today, ctx.fetcher, ctx.mode, ctx.no_links = settings, today, fetcher, args.mode, args.no_links
+    ctx.renderer, ctx.render_error, ctx.render_lock = None, None, threading.Lock()
 
     if args.probe:
         b = next((x for x in boards if x["id"] == args.probe), None)
@@ -352,7 +411,11 @@ def main(argv=None):
         res = process_board(b, None, ctx)
         out = {k: res[k] for k in ("id", "url", "fetch_status", "fetch_error", "final_url", "page_title", "region_found",
                                     "latest_date", "latest_title", "window_oldest", "post_counting", "fingerprint", "reasons")}
+        out["rendered"] = bool(res.get("rendered"))
+        out["date_note"] = res.get("date_note")
         out["rows_seen"] = len(res.get("seen_posts", {}))
+        if ctx.renderer:
+            ctx.renderer.close()
         out["titles"] = res["titles"][:5]
         out["status"], out["note"] = evaluate(res, b, today, months)
         print(json.dumps(out, ensure_ascii=False, indent=2))
@@ -368,7 +431,9 @@ def main(argv=None):
             "request_policy": {"max_concurrency": settings["max_concurrency"], "min_interval_sec": settings["min_interval_sec"],
                                "user_agent": fetcher.ua, "retries": settings["retries"],
                                "abort_after_blocked": settings["abort_after_blocked"]},
-            "allowed_domains": profile["allowed_domains"]}
+            "allowed_domains": profile["allowed_domains"],
+            "js_handling": {"js_fallback": settings["js_fallback"],
+                            "render_playwright_boards": sum(1 for b in fetch if b.get("render") == "playwright")}}
     if args.dry_run:
         print(json.dumps(plan, ensure_ascii=False, indent=2))
         return 0
@@ -407,8 +472,12 @@ def main(argv=None):
             results[b["id"]] = r
         return r
 
-    with cf.ThreadPoolExecutor(max_workers=int(settings["max_concurrency"])) as ex:
-        list(ex.map(work, fetch))
+    try:
+        with cf.ThreadPoolExecutor(max_workers=int(settings["max_concurrency"])) as ex:
+            list(ex.map(work, fetch))
+    finally:
+        if ctx.renderer:
+            ctx.renderer.close()
 
     # 판정·AI 대상 선별
     rng_rate = max(0.0, min(1.0, args.sample_rate))

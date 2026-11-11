@@ -25,7 +25,8 @@ history/*.json ─▶ monthly_report.py ─▶ 월간 보고(신규 콘텐츠·�
 | VS Code Cline | 전체 (`.clinerules/`, 스킬은 `.claude/skills/` 인식) — `docs/cline-vscode.md` |
 | Codex, Antigravity | 전체 (`AGENTS.md`, `.agents/`) |
 | 스크립트 + 개인 API 키 | 수집·요약·AI 판단·월간 보고, 스케줄 무인 실행 — `docs/운영가이드.md` |
-| GPT/Claude 일반 채팅 | 파일 실행 불가. 스크립트 결과(`ai-review-queue.json` 등)를 업로드해 판단·보고서 작성만 가능 |
+| Claude 채팅(claude.ai) | 조건부 — 스킬 zip 업로드(`make_claude_skill.py`), 코드 실행 켜기, 대상 도메인 허용 필요, 상태는 zip으로 주고받음 — `docs/claude-chat.md` |
+| GPT 채팅·기타 일반 채팅 | 파일 실행 불가. 스크립트 결과(`ai-review-queue.json` 등)를 업로드해 판단·보고서 작성만 가능 |
 
 ## 빠른 시작
 
@@ -61,7 +62,7 @@ python scripts/monthly_report.py --workspace workspace --month 2026-09
 
 ## 한계 (알고 쓰세요)
 
-- 스크립트는 자바스크립트로 그려지는 목록을 읽지 못합니다 → `js_suspected`로 표시되며 브라우저 에이전트 또는 수동 확인이 필요합니다.
+- 스크립트는 기본적으로 자바스크립트로 그려지는 목록을 읽지 못합니다 → `js_suspected`로 표시되며 (A) 에이전트 브라우저 확인, (B) 서버 렌더링 주소 사용, (C) Playwright 선택 모듈 중 고를 수 있습니다 (`docs/운영가이드.md` 9절).
 - 게시일은 목록의 첫 날짜를 기본으로 인식합니다. 사이트마다 `--probe`로 검증하고 프로필을 보정해야 합니다.
 - 월별 신규 콘텐츠 건수는 수집한 목록 범위 내 집계입니다(부분 집계는 표시됨).
 - AI 판단은 모델마다 편차가 있습니다. 모델을 바꾸면 `scripts/eval_judge.py`로 비교하세요.
@@ -83,6 +84,7 @@ python scripts/monthly_report.py --workspace workspace --month 2026-09
 
 ```bash
 python -m unittest discover -s tests          # 테스트 (로컬 가짜 사이트 사용, 외부 요청 없음)
+python scripts/make_claude_skill.py           # claude.ai 채팅용 스킬 zip
 python scripts/make_release.py                # 배포 zip (허용 목록 방식, 실제 기관 도메인 혼입 검사)
 ```
 
