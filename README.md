@@ -22,6 +22,7 @@ history/*.json ─▶ monthly_report.py ─▶ 월간 보고(신규 콘텐츠·�
 | --- | --- |
 | Claude Code | 전체 (`CLAUDE.md` → `AGENTS.md`, `.claude/skills/`) |
 | pi 에이전트 / Orca | 전체 (`AGENTS.md`, `.agents/skills/`) — `docs/pi-orca.md` |
+| VS Code Cline | 전체 (`.clinerules/`, 스킬은 `.claude/skills/` 인식) — `docs/cline-vscode.md` |
 | Codex, Antigravity | 전체 (`AGENTS.md`, `.agents/`) |
 | 스크립트 + 개인 API 키 | 수집·요약·AI 판단·월간 보고, 스케줄 무인 실행 — `docs/운영가이드.md` |
 | GPT/Claude 일반 채팅 | 파일 실행 불가. 스크립트 결과(`ai-review-queue.json` 등)를 업로드해 판단·보고서 작성만 가능 |
@@ -73,7 +74,7 @@ python scripts/monthly_report.py --workspace workspace --month 2026-09
 | `core/` | 공통 규칙·판단 기준·절차 (단일 원본) |
 | `scripts/` | 표준 라이브러리 전용 파이썬 |
 | `config.example/` | 프로필·설정 예시 |
-| `.agents/`, `.claude/` | 에이전트별 얇은 어댑터(스킬·워크플로·규칙 요약) |
+| `.agents/`, `.claude/`, `.clinerules/` | 에이전트별 얇은 어댑터(스킬·워크플로·규칙 요약) |
 | `docs/` | 운영 가이드, 보안 통보 양식, pi·Orca 사용법 |
 | `tests/` | 테스트와 AI 판단 평가 세트 |
 | `workspace/` | 담당자별 데이터 (커밋 대상 아님). `workspace/legacy/`는 이전 점검 원본(내부용) |

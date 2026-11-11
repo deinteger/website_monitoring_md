@@ -20,10 +20,10 @@ import monlib as ml  # noqa: E402
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 ALLOW = ["AGENTS.md", "CLAUDE.md", "README.md", ".gitignore", "core", "docs", "scripts", "config.example", "tests",
-         ".agents/skills", ".agents/rules", ".agents/workflows", ".claude/skills"]
+         ".agents/skills", ".agents/rules", ".agents/workflows", ".claude/skills", ".clinerules"]
 ALLOWED_HOSTS = {"example.go.kr", "www.example.go.kr", "example.com", "www.example.com", "127.0.0.1", "localhost",
                  "api.openai.com", "api.anthropic.com", "claude.ai", "github.com", "pi.dev", "onorca.dev", "www.onorca.dev",
-                 "code.claude.com", "cdn.jsdelivr.net"}
+                 "code.claude.com", "cdn.jsdelivr.net", "docs.cline.bot", "fast.io"}
 TEXT_EXT = (".md", ".py", ".json", ".txt", ".csv", ".html", ".gitignore", "")
 
 

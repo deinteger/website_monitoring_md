@@ -1,5 +1,7 @@
 # pi 에이전트와 Orca에서 사용하기
 
+> VS Code의 Cline은 `docs/cline-vscode.md`를 참고한다. 요청 문구 예시는 Cline에서도 같이 쓸 수 있다.
+
 ## 동작 원리
 
 - **pi**는 프로젝트의 `AGENTS.md`를 시작 시 읽고, 프로젝트의 `.agents/skills/` 또는 `.pi/skills/`에 있는 Agent Skills(`SKILL.md`)를 자동으로 인식한다 (pi 문서 기준. 버전에 따라 경로가 바뀔 수 있어 **설치한 pi 버전의 문서로 확인 필요**).

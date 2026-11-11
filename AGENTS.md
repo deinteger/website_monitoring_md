@@ -1,7 +1,7 @@
 # 홈페이지 점검 키트 — 에이전트 지침
 
 공공기관 홈페이지 모니터링·현행화 점검 키트다. 스크립트(수집·날짜 계산)와 AI(추론 판단)가 역할을 나눈다.
-pi(Orca 포함), Codex, Antigravity 등 `AGENTS.md`를 읽는 에이전트가 사용한다. Claude Code는 `CLAUDE.md`를 통해 이 파일을 읽는다.
+pi(Orca 포함), Codex, Antigravity, Cline 등 `AGENTS.md`를 읽는 에이전트가 사용한다. Claude Code는 `CLAUDE.md`를 통해 이 파일을 읽는다.
 
 ## 작업 시작 전 반드시
 
