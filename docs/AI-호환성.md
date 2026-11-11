@@ -13,6 +13,8 @@
 | ChatGPT | 대화에 시작 프롬프트 + 결과 파일 첨부 | 수집은 로컬(Codex 등)에서, 판단·조회·보고는 ChatGPT에서 | 수집은 ChatGPT 샌드박스에서 불가할 수 있음(확인 필요) |
 
 ## 공통 시작 문구 (어느 도구에서나)
+더 많은 문구(설정·점검·조회·설정 변경)는 `docs/AI-시작-프롬프트.md`. ChatGPT용 묶음은 `python scripts/make_gpt_bundle.py` (`dist/gpt-bundle/`).
+
 > 이 폴더의 `AGENTS.md`를 읽고 `core/rules.md`와 `core/skill-body.md` 절차대로 홈페이지 점검을 도와줘. 점검 범위부터 물어봐.
 
 ## 결과 파일은 각자 PC에 생성된다

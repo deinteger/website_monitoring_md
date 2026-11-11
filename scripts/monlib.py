@@ -452,6 +452,7 @@ class Fetcher(object):
         self.abort_reason = ""
         self.aborted = False
         self.request_count = 0
+        self.head_unsupported = set()
         ctx = None
         if not settings.get("verify_ssl", True):
             ctx = ssl._create_unverified_context()
@@ -544,10 +545,14 @@ class Fetcher(object):
 
     def check_url(self, url):
         """링크·첨부 점검: HEAD 우선, 미지원 서버는 GET(최소 읽기)으로 재확인한다."""
-        r = self.get(url, method="HEAD")
-        if r.error or r.status in (400, 403, 405, 501):
-            r = self.get(url, method="GET", max_bytes=1024)
-        return r
+        host = (urllib.parse.urlsplit(url).hostname or "").lower()
+        if host not in self.head_unsupported:
+            r = self.get(url, method="HEAD")
+            if r.status in (405, 501):      # HEAD 미지원 서버: 같은 호스트에는 다시 HEAD 를 보내지 않는다(요청 절반, 일부 서버의 HEAD 연결 끊김 회피)
+                self.head_unsupported.add(host)
+            if not (r.error or r.status in (400, 403, 405, 501)):
+                return r
+        return self.get(url, method="GET", max_bytes=1024)
 
 
 # ---------------------------------------------------------------- 설정·프로필

@@ -20,7 +20,7 @@ import monlib as ml  # noqa: E402
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 NAME = "homepage-inspection"
-SKIP_SCRIPTS = {"make_release.py", "make_claude_skill.py", "eval_judge.py"}
+SKIP_SCRIPTS = {"make_release.py", "make_claude_skill.py", "make_gpt_bundle.py", "eval_judge.py"}
 
 SKILL_MD = """---
 name: homepage-inspection

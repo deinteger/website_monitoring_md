@@ -57,3 +57,18 @@ class Portability(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class GptBundle(unittest.TestCase):
+    @unittest.skipUnless(os.path.exists(os.path.join(ROOT, "scripts", "make_gpt_bundle.py")) and os.path.isdir(os.path.join(ROOT, ".git")), "저장소에서만")
+    def test_bundle_builds(self):
+        import make_gpt_bundle
+        import zipfile
+        self.assertLessEqual(len(make_gpt_bundle.INSTRUCTIONS), make_gpt_bundle.LIMIT)
+        self.assertEqual(make_gpt_bundle.main(()), 0)
+        out = os.path.join(ROOT, "dist", "gpt-bundle")
+        self.assertTrue(os.path.isfile(os.path.join(out, "instructions.txt")))
+        self.assertTrue(os.path.isfile(os.path.join(out, "knowledge", "rules.md")))
+        names = zipfile.ZipFile(os.path.join(out, "kit.zip")).namelist()
+        self.assertTrue(any(n.endswith("scripts/setup.py") for n in names))
+        self.assertFalse(any("/workspace/" in n and not n.endswith(".gitkeep") for n in names))

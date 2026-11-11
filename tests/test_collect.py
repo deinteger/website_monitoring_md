@@ -261,3 +261,38 @@ class CollectTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class HeadUnsupportedTests(unittest.TestCase):
+    def test_host_without_head_support_is_not_asked_twice(self):
+        import http.server
+        import threading
+        seen = []
+
+        class H(http.server.BaseHTTPRequestHandler):
+            def do_HEAD(self):
+                seen.append("HEAD")
+                self.send_response(405)
+                self.end_headers()
+
+            def do_GET(self):
+                seen.append("GET")
+                self.send_response(200)
+                self.send_header("Content-Length", "2")
+                self.end_headers()
+                self.wfile.write(b"ok")
+
+            def log_message(self, *a):
+                pass
+        srv = http.server.HTTPServer(("127.0.0.1", 0), H)
+        threading.Thread(target=srv.serve_forever, daemon=True).start()
+        try:
+            f = ml.Fetcher(dict(ml.DEFAULT_SETTINGS, min_interval_sec=0, retry_wait_sec=0))
+            base = "http://127.0.0.1:%d/" % srv.server_port
+            for i in range(3):
+                self.assertEqual(f.check_url(base + "p%d" % i).status, 200)
+            self.assertEqual(seen.count("HEAD"), 1)
+            self.assertEqual(seen.count("GET"), 3)
+        finally:
+            srv.shutdown()
+            srv.server_close()
