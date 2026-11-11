@@ -27,7 +27,29 @@ def table(headers, rows):
     return "\n".join(out) + "\n"
 
 
-def build(findings, judgement, today, months):
+def typo_block(typo):
+    """게시글 본문 오타 점검 결과(6절에 덧붙임). typo = {"queue":..., "judgement":...} 또는 None"""
+    if not typo or typo.get("queue") is None:
+        return []
+    q, j = typo["queue"], typo.get("judgement")
+    L = ["### 게시글 본문 오타 점검\n"]
+    L.append("대상 게시글 %d건 수집 (본문 확인 불가·상한 초과 등 제외 %d건)\n" % (len(q["items"]), len(q.get("skipped", []))))
+    if j is None:
+        L.append("AI 판단 미실시: 수집한 게시글 본문의 오타는 점검되지 않았습니다.\n")
+        return L
+    rows = []
+    for it in j["items"]:
+        for x in it["issues"]:
+            rows.append([it.get("name"), "[%s](%s) (%s)" % (it.get("title") or "-", it.get("url") or "", it.get("date") or ""), x["type"],
+                         x["quote"], x["suggestion"], x["reason"]])
+    L.append(table(["게시판", "게시글", "유형", "오류 구절(원문)", "수정안", "사유"], rows))
+    judged = len(j["items"])
+    clean = sum(1 for it in j["items"] if not it["issues"])
+    L.append("점검 %d건 중 오류 없음 %d건, 지적 %d건 (원문 인용 검증에 실패해 버려진 AI 지적 %d건)\n" % (judged, clean, len(rows), j.get("dropped_unverified", 0)))
+    return L
+
+
+def build(findings, judgement, today, months, typo=None):
     meta = findings["meta"]
     fl = findings["findings"]
     boards = findings["boards"]
@@ -68,6 +90,7 @@ def build(findings, judgement, today, months):
         L.append(table(["영역", "원문 인용", "사유", "개선안"], rows))
     if judgement is None:
         L.append("## 6. 문구 개선사항\n\nAI 판단 미실시\n")
+    L.extend(typo_block(typo))
     L.append("## 7. 담당자 확인 필요사항\n")
     rows = [[f["system"], f["area"], f["detail"], f["evidence"], f.get("owner"), f["url"]] for f in by_cat("담당자 확인 필요")]
     rows += [[i.get("name"), "-", i["note"], "AI 판단(신뢰도 %s)" % i["confidence"], "", i.get("url")] for i in items if i["verdict"] == "담당자 확인 필요"]
@@ -87,6 +110,8 @@ def build(findings, judgement, today, months):
         lim.append("AI 판단 실패 배치 %d건 (해당 항목은 '담당자 확인 필요'로 표기)" % len(judgement["errors"]))
     if judgement and judgement.get("over_limit_skipped"):
         lim.append("AI 판단 건수 상한 초과로 제외된 게시판 %d개" % len(judgement["over_limit_skipped"]))
+    if typo and typo.get("queue") is not None and typo["queue"].get("skipped"):
+        lim.append("오타 점검에서 제외된 게시글 %d건: %s" % (len(typo["queue"]["skipped"]), "; ".join(sorted(set(x["reason"] for x in typo["queue"]["skipped"])))[:300]))
     lim.append("개인정보 노출 점검은 마스킹된 텍스트 기준이며 이름·주소는 자동 마스킹되지 않음")
     L.extend("- " + x for x in lim)
     L.append("")
@@ -124,7 +149,9 @@ def main(argv=None):
         return 1
     judgement = ml.load_json(os.path.join(runs, date, "judgement.json"))
     months = int(ml.load_settings(args.workspace)["stale_months"])
-    md = build(findings, judgement, date, months)
+    typo = {"queue": ml.load_json(os.path.join(runs, date, "typo-review-queue.json")),
+            "judgement": ml.load_json(os.path.join(runs, date, "typo-judgement.json"))}
+    md = build(findings, judgement, date, months, typo)
     path = os.path.join(runs, date, "inspection-summary.md")
     with open(path, "w", encoding="utf-8") as f:
         f.write(md)

@@ -213,6 +213,32 @@ class CollectTests(unittest.TestCase):
         self.assertEqual(self.statuses("2026-08-26")["r"], "리다이렉트오류")
         self.assertEqual(fx.STATE.hits.get("/elsewhere", 0), 0)    # 외부로 가는 리다이렉트는 따라가지 않는다
 
+    def test_slow_response_hits_total_deadline(self):
+        fx.write_workspace(self.ws, self.port, [{"id": "s", "name": "느림", "url": "/slow", "cycle": "daily"}],
+                           {"max_total_sec": 1, "retries": 0})
+        import time
+        t0 = time.monotonic()
+        self.run_collect("--mode", "full", "--today", "2026-08-26")
+        self.assertLess(time.monotonic() - t0, 2.9)                  # 서버는 3초 뒤 응답하지만 1초에 포기
+        st = self.statuses("2026-08-26")["s"]
+        self.assertEqual(st, "접속오류")
+        cache = json.load(open(os.path.join(self.ws, "cache.json"), encoding="utf-8"))
+        self.assertIn("시간 초과", cache["boards"]["s"]["fetch_error"])
+
+    def test_consecutive_connection_failures_abort(self):
+        boards = [{"id": "d%d" % i, "name": "d", "url": "/x", "cycle": "daily"} for i in range(8)]
+        fx.write_workspace(self.ws, self.port, boards, {"abort_after_failures": 3, "max_concurrency": 1, "retries": 0})
+        prof = json.load(open(os.path.join(self.ws, "site-profile.json"), encoding="utf-8"))
+        for b in prof["boards"]:
+            b["url"] = "http://127.0.0.1:1/x"                       # 아무도 듣지 않는 포트
+        prof["allowed_domains"] = ["127.0.0.1"]
+        json.dump(prof, open(os.path.join(self.ws, "site-profile.json"), "w", encoding="utf-8"), ensure_ascii=False)
+        code, _ = self.run_collect("--mode", "full", "--today", "2026-08-26")
+        self.assertEqual(code, 2)                                    # 계속 두드리지 않고 중단
+        summ = self.load("2026-08-26", "run-summary.json")
+        self.assertTrue(summ["partial"])
+        self.assertTrue(any("연속" in w for w in summ["warnings"]))
+
     def test_probe(self):
         code, out = self.run_collect("--probe", "notice", "--today", "2026-08-26")
         self.assertEqual(code, 0)

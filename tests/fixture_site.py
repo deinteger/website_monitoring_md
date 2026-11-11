@@ -3,6 +3,7 @@ import http.server
 import json
 import os
 import threading
+import time
 import zlib
 
 
@@ -45,6 +46,23 @@ class Handler(http.server.BaseHTTPRequestHandler):
             self.send_response(429)
             self.end_headers()
             return
+        if path == "/slow":
+            time.sleep(3)
+            self.send_response(200)
+            self.end_headers()
+            return
+        if path == "/to-root":
+            self.send_response(302)
+            self.send_header("Location", "/")
+            self.end_headers()
+            return
+        if path == "/img/ok.png":
+            self.send_response(200)
+            self.send_header("Content-Type", "image/png")
+            self.end_headers()
+            if not head:
+                self.wfile.write(b"\x89PNG")
+            return
         if path.startswith("/redirect"):
             self.send_response(302)
             self.send_header("Location", "http://localhost:%d/elsewhere" % self.server.server_address[1])
@@ -58,7 +76,7 @@ class Handler(http.server.BaseHTTPRequestHandler):
                 self.wfile.write(b"%PDF-1.4")
             return
         if path.startswith("/view/"):
-            entry = "<html>ok</html>"
+            entry = STATE.pages.get(path) or "<html>ok</html>"
         else:
             entry = STATE.pages.get(path)
         if entry is None:

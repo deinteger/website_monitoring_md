@@ -16,6 +16,20 @@ history/*.json ─▶ monthly_report.py ─▶ 월간 보고(신규 콘텐츠·�
 - 방문하지 않은 게시판도 날짜 경과 판정은 매번 다시 계산하고, AI는 **변경·이상 건만** 판단하므로 매일 돌려도 불필요한 점검과 토큰 소모가 적습니다.
 - AI 판단은 원문 인용을 요구하고 검증합니다 (원문에 없는 인용은 '담당자 확인 필요'로 하향).
 
+## 할 수 있는 일
+
+| 기능 | 명령/설명 |
+|---|---|
+| 정기 점검(전체·증분) | `collect.py`, `run_all.py` — 링크·접속 오류, 3개월 최신성, 변경 감지, 신규·지속·해결 |
+| AI 판단 | 현행화 의심, 문구, 연락처 형식 이상 (원문 인용 검증) |
+| 게시글 본문 오타 점검(선택) | `--typo-check` — 신규 글만, 상한·1회 점검, 마스킹 후 AI 판단 |
+| 월간 보고 | `monthly_report.py` — 신규 콘텐츠·현행화 수치 전월 대비 |
+| 최근 현행화 조회 | `recent_changes.py --days 2` — "어제 그제 올라온 게시물" (오프라인) |
+| 현황·담당자 연락처 조회 | `lookup.py status|overview|contact|find` — 사이트에 들어가지 않고 질의 |
+| 검색엔진 인덱스 점검 | `check_index_links.py` — 구글·네이버·다음 `site:` 결과의 깨진 링크·소프트 404 |
+| JS 게시판 보완(선택) | Playwright 선택 모듈, 에이전트 브라우저, 서버 렌더링 주소 |
+| 주기 실행 | `make_schedule.py` — Windows/cron 등록 명령 생성 |
+
 ## 사용 환경
 
 | 환경 | 가능 범위 |
@@ -51,7 +65,7 @@ python scripts/monthly_report.py --workspace workspace --month 2026-09
 
 `workspace/runs/YYYY-MM-DD/`: `inspection-summary.md`, `inspection-details.csv`, `recency-status.csv`, `findings.json`, `ai-review-queue.json`, `judgement.json`, `run-summary.json`
 `workspace/reports/YYYY-MM/`: `monthly-report.md`, `monthly-metrics.json`, `monthly-boards.csv`
-필드 정의는 `core/report-fields.md`, 월간 지표 정의는 `core/monthly-report.md` 입니다.
+검색엔진 인덱스 점검(구글·네이버·다음 `site:`)은 `search-index-links.csv`로 별도 출력됩니다. 필드 정의는 `core/report-fields.md`, 월간 지표 정의는 `core/monthly-report.md` 입니다.
 
 ## 보안·운영 주의
 

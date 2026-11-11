@@ -34,6 +34,8 @@ DEFAULT_SETTINGS = {
     "retry_wait_sec": 3,
     "max_retry_after_sec": 60,
     "abort_after_blocked": 5,       # 403/429가 연속 N회면 차단 의심으로 중단
+    "abort_after_failures": 10,     # 응답 없음·접속 실패가 연속 N회면 서버 장애/차단 가능성으로 중단
+    "max_total_sec": 45,            # 요청 1회(연결·응답 수신 전체)의 총 시간 상한. 느리게 이어지는 응답·이름 해석 지연 방어
     "user_agent": "WebsiteMonitoringKit/" + VERSION,
     "contact": "",                  # 담당 부서/연락처: User-Agent에 포함되어 허용 목록 등록 및 문의에 활용
     "verify_ssl": True,
@@ -43,6 +45,11 @@ DEFAULT_SETTINGS = {
     "full_every_days": 30,          # 마지막 전체 점검 후 이 기간이 지나면 full 권장 경고
     "js_fallback": "agent",         # 목록을 못 읽은 게시판(js_suspected) 처리: agent(에이전트 브라우저 확인) | playwright(자동 렌더링)
     "render": {"timeout_sec": 30, "block_resources": True, "executable_path": "", "no_sandbox": False, "wait_after_load_ms": 300},
+    # 게시글 본문 오타 점검(선택): 신규 게시글의 상세 페이지를 추가로 요청하고 AI가 판단하므로 기본은 꺼 둔다
+    "typo_check": {"enabled": False, "max_posts_per_board": 3, "max_posts_per_run": 30, "max_chars": 3000,
+                   "checked_cap": 2000},
+    "recent_posts_keep_days": 60,   # 최근 게시물 조회용으로 보관하는 기간(일)
+    "recent_posts_cap": 100,        # 게시판당 최대 보관 건수
     "excerpt_chars": 1500,
     "seen_posts_cap": 3000,
     "llm": {"allowed": False},
@@ -347,6 +354,33 @@ def parse_list_page(html, url, board):
     }
 
 
+_BODY_HINT = re.compile(r"view|cont|article|body|txt|text|detail|conts", re.I)
+
+
+def extract_post_body(html, board):
+    """게시글 상세 페이지에서 본문 텍스트를 추출한다.
+    우선순위: 프로필의 body_region({tag,class|id}) > 휴리스틱(본문 후보 클래스/ID 중 텍스트가 가장 긴 요소, 페이지 전체의 90% 미만).
+    반환: (본문 텍스트, 방법). 본문을 못 찾으면 ("", "not_found")."""
+    spec = board.get("body_region")
+    if spec:
+        found = find_elements(html, spec.get("tag", "div"), spec.get("class"), spec.get("id"), limit=1)
+        if found:
+            return html_parse(found[0])[0], "body_region"
+        return "", "body_region_not_found"
+    page_len = max(len(html_parse(html)[0]), 1)
+    best, best_len = None, 0
+    for tag in ("div", "article", "section", "td", "dd"):
+        for inner, attrs in find_elements_attrs(html, tag):
+            if not _BODY_HINT.search((attrs.get("class") or "") + " " + (attrs.get("id") or "")):
+                continue
+            t = html_parse(inner)[0]
+            if best_len < len(t) < 0.9 * page_len:
+                best, best_len = t, len(t)
+    if best:
+        return best, "heuristic"
+    return "", "not_found"
+
+
 def fingerprint(parsed):
     """변경 감지용 지문. 조회수 같은 변동 숫자의 영향을 줄이기 위해 제목·날짜 중심으로 계산한다."""
     if parsed["rows"]:
@@ -395,6 +429,8 @@ class Fetcher(object):
         self._lock = threading.Lock()
         self._next = 0.0
         self._blocked = 0
+        self._fail = 0
+        self.abort_reason = ""
         self.aborted = False
         self.request_count = 0
         ctx = None
@@ -418,43 +454,66 @@ class Fetcher(object):
         if t > now:
             time.sleep(t - now)
 
-    def _note(self, status):
+    def _note(self, status, error=None):
         with self._lock:
             if status in (403, 429):
                 self._blocked += 1
                 if self._blocked >= int(self.s["abort_after_blocked"]):
                     self.aborted = True
+                    self.abort_reason = "403/429가 연속 %d회 발생하여 차단 의심으로 중단" % self._blocked
             else:
                 self._blocked = 0
+            if status is None and error:
+                self._fail += 1
+                if self._fail >= int(self.s["abort_after_failures"]):
+                    self.aborted = True
+                    self.abort_reason = "응답 없음·접속 실패가 연속 %d회 발생(서버 장애 또는 차단 가능성)하여 중단" % self._fail
+            else:
+                self._fail = 0
+
+    def _do(self, url, method, max_bytes, out):
+        try:
+            req = urllib.request.Request(url, method=method, headers={
+                "User-Agent": self.ua, "Accept": "text/html,application/xhtml+xml,*/*;q=0.8",
+                "Accept-Language": "ko-KR,ko;q=0.9"})
+            with self.opener.open(req, timeout=float(self.s["timeout_sec"])) as r:
+                out["status"], out["final_url"], out["headers"] = r.status, r.geturl(), dict(r.headers)
+                out["body"] = r.read(max_bytes) if method == "GET" else b""
+        except urllib.error.HTTPError as e:
+            out["status"], out["final_url"], out["headers"] = e.code, e.geturl() or url, dict(e.headers or {})
+            try:
+                out["body"] = e.read(20000)
+            except Exception:
+                out["body"] = b""
+        except (urllib.error.URLError, socket.timeout, ConnectionError, ssl.SSLError, OSError) as e:
+            out["error"] = "%s: %s" % (type(e).__name__, getattr(e, "reason", e))
+        except Exception as e:  # 예기치 않은 예외도 한 요청의 실패로 처리한다
+            out["error"] = "%s: %s" % (type(e).__name__, e)
+        finally:
+            out["done"] = True
 
     def get(self, url, method="GET", max_bytes=2000000):
         res = FetchResult(url)
         attempts = 1 + int(self.s["retries"])
         for attempt in range(attempts):
             if self.aborted:
-                raise Blocked("403/429가 연속 발생하여 차단 의심으로 중단")
+                raise Blocked(self.abort_reason or "차단·장애 의심으로 중단")
             self._wait()
             self.request_count += 1
             t0 = time.monotonic()
             res.error, res.status, retry_after = None, None, None
-            try:
-                req = urllib.request.Request(url, method=method, headers={
-                    "User-Agent": self.ua, "Accept": "text/html,application/xhtml+xml,*/*;q=0.8",
-                    "Accept-Language": "ko-KR,ko;q=0.9"})
-                with self.opener.open(req, timeout=float(self.s["timeout_sec"])) as r:
-                    res.status, res.final_url, res.headers = r.status, r.geturl(), dict(r.headers)
-                    res.body = r.read(max_bytes) if method == "GET" else b""
-            except urllib.error.HTTPError as e:
-                res.status, res.final_url, res.headers = e.code, e.geturl() or url, dict(e.headers or {})
-                retry_after = (e.headers or {}).get("Retry-After")
-                try:
-                    res.body = e.read(20000)
-                except Exception:
-                    res.body = b""
-            except (urllib.error.URLError, socket.timeout, ConnectionError, ssl.SSLError, OSError) as e:
-                res.error = "%s: %s" % (type(e).__name__, getattr(e, "reason", e))
+            out = {}
+            th = threading.Thread(target=self._do, args=(url, method, max_bytes, out), daemon=True)
+            th.start()
+            th.join(float(self.s["max_total_sec"]))
+            if not out.get("done"):   # 느린 응답·이름 해석 지연으로 총 시간을 넘긴 요청은 포기한다(스레드는 버림)
+                res.error = "시간 초과: %d초 안에 응답을 끝내지 못함" % int(self.s["max_total_sec"])
+            else:
+                res.status, res.final_url = out.get("status"), out.get("final_url", url)
+                res.headers, res.body, res.error = out.get("headers", {}), out.get("body", b""), out.get("error")
+                retry_after = (res.headers or {}).get("Retry-After")
             res.elapsed = time.monotonic() - t0
-            self._note(res.status)
+            self._note(res.status, res.error)
             if res.error is None and res.status is not None and res.status < 500 and res.status != 429:
                 break
             if attempt < attempts - 1:

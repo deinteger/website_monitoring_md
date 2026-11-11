@@ -59,6 +59,40 @@ python scripts/monthly_report.py --workspace workspace --month YYYY-MM
 
 `monthly-report.md`의 `AI_COMMENT` 자리에 3~5줄 종합 의견을 쓴다. 수치는 표의 값만 인용하고 새로 계산하지 않는다. 지표 정의는 `core/monthly-report.md`.
 
+## 6. 검색엔진 인덱스 점검 (선택)
+
+구글·네이버·다음의 `site:도메인` 결과에 남은 깨진 링크·소프트 404·깨진 이미지를 점검한다. 절차: `.agents/workflows/search-index-inspection.md`
+(URL 수집은 브라우저, 점검은 `scripts/check_index_links.py`). 검색엔진 결과를 스크립트로 직접 긁지 않는다.
+
+## 7. 질문에 답하기 (현황·최근 변경·담당자 연락처)
+
+사용자가 사이트에 일일이 들어가지 않고 물을 때 아래 명령으로 답한다. 기간 표현("어제", "그제", "지난주")은 오늘 날짜 기준으로 `--days`/`--from`/`--to`에 옮길 때만 계산하고, 판정·상태는 계산하지 않는다.
+
+| 사용자 질문 | 명령 | 네트워크 |
+| --- | --- | --- |
+| "어제 그제 현행화된 게시물이 뭐야?" | `python scripts/recent_changes.py --workspace workspace --days 2` ("어제·그제" = 오늘 제외 2일) | 없음 |
+| "최근 일주일에 새로 올라온 거" | `... --days 7 --include-today` | 없음 |
+| "점검해서 어제 그제 올라온 거 알려줘" | `... --days 2 --refresh` (증분 점검 후 조회) | 사용 |
+| "우리가 처음 확인한 신규 글만" | `... --by seen` | 없음 |
+| "보도자료 현황 알려줘" | `python scripts/lookup.py --workspace workspace status 보도자료` | 없음 |
+| "전체 홈페이지 현황" | `python scripts/lookup.py --workspace workspace overview` | 없음 |
+| "보도자료 담당자 연락처" | `python scripts/lookup.py --workspace workspace contact 보도자료` (특정 글은 `--latest-post` 또는 `--url`) | 해당 페이지 GET 1회 |
+| "OO 게시판이 어디 있지?" | `python scripts/lookup.py --workspace workspace find OO` | 없음 |
+
+- 결과의 `주의`(마지막 점검일 이후 미반영, 방문하지 않은 게시판 등)를 **그대로 사용자에게 전달**한다. 데이터가 오래됐으면 `--refresh` 또는 점검을 권한다.
+- 질의 명령은 `workspace/cache.json`과 `history/`만 읽으므로 `state.zip`만 있으면 채팅형 환경에서도 사이트 접속 없이 동작한다.
+- 후보가 여럿이면(종료코드 3) 추측하지 말고 후보를 사용자에게 보여 주고 고르게 한다.
+- 연락처는 **해당 페이지에 공개된 표기만** 전달한다. 근거 원문과 위치(본문/푸터=기관 공통)를 함께 보여 주고, 찾지 못하면 찾지 못했다고 말한다 (추정·생성 금지). 연락처는 저장하거나 다른 곳에 옮기지 않는다.
+- 주기 실행 등록은 `python scripts/make_schedule.py --os windows|linux ...`가 명령을 만들어 준다 (출력만 하며 직접 등록하지 않는다).
+
+## 8. 게시글 본문 오타 점검 (선택)
+
+신규 게시글의 본문에서 맞춤법·띄어쓰기·오탈자를 찾는다. 기본은 꺼져 있으며 `--typo-check` 또는 `settings.json`의 `typo_check.enabled`로 켠다.
+
+1. 수집: `python scripts/collect.py --workspace workspace --typo-check` → `typo-review-queue.json` (게시판당 최신 N건, 실행당 상한, 한 번 점검한 글은 재요청 없음, 개인정보 마스킹)
+2. 판단: `core/typo-guide.md` 기준으로 판단해 `typo-judgement.json` 작성 (또는 `python scripts/judge.py --workspace workspace --task typo`). `quote`는 본문에 있는 구절만, 고유명사·전문용어는 오류로 보고하지 않는다.
+3. 요약: `make_summary.py`가 6절에 오타 표를 넣는다. 본문을 못 찾은 게시판은 프로필에 `body_region`을 지정한다 (`--probe <id> --probe-post`로 미리 확인).
+
 ## 하지 말 것
 
 - 스크립트 결과의 날짜·상태를 직접 재계산하거나 뒤집기

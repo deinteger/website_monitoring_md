@@ -27,5 +27,15 @@
     "executable_path": "",
     "no_sandbox": false
   },
-  "_js_fallback설명": "목록을 못 읽은 게시판 처리: agent(기본, 에이전트 브라우저로 확인) | playwright(자동 렌더링, 별도 설치 필요)"
+  "_js_fallback설명": "목록을 못 읽은 게시판 처리: agent(기본, 에이전트 브라우저로 확인) | playwright(자동 렌더링, 별도 설치 필요)",
+  "typo_check": {
+    "enabled": false,
+    "max_posts_per_board": 3,
+    "max_posts_per_run": 30,
+    "max_chars": 3000
+  },
+  "_typo_check설명": "게시글 본문 오타 점검(신규 글만, 게시판당·실행당 상한). 켜면 상세 페이지 요청이 추가되므로 보안 통보에 포함",
+  "recent_posts_keep_days": 60,
+  "max_total_sec": 45,
+  "abort_after_failures": 10
 }

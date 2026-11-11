@@ -23,7 +23,8 @@ ALLOW = ["AGENTS.md", "CLAUDE.md", "README.md", ".gitignore", "core", "docs", "s
          ".agents/skills", ".agents/rules", ".agents/workflows", ".claude/skills", ".clinerules"]
 ALLOWED_HOSTS = {"example.go.kr", "www.example.go.kr", "example.com", "www.example.com", "127.0.0.1", "localhost",
                  "api.openai.com", "api.anthropic.com", "claude.ai", "github.com", "pi.dev", "onorca.dev", "www.onorca.dev",
-                 "code.claude.com", "cdn.jsdelivr.net", "docs.cline.bot", "fast.io", "support.claude.com", "platform.claude.com"}
+                 "code.claude.com", "cdn.jsdelivr.net", "docs.cline.bot", "fast.io", "support.claude.com", "platform.claude.com",
+                 "www.google.com", "search.naver.com", "search.daum.net"}
 TEXT_EXT = (".md", ".py", ".json", ".txt", ".csv", ".html", ".gitignore", "")
 
 

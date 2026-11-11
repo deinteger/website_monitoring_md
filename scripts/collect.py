@@ -190,6 +190,58 @@ def rendered_fetch(url, board, ctx):
     return fr
 
 
+def merge_recent_posts(prev, rows, ctx):
+    """'최근 현행화된 게시물' 조회용 이력. 제목은 마스킹해 저장한다.
+    first_seen: 이 키트가 처음 관측한 날짜. 게시판 최초 수집(기준선)에서 본 글은 null(알 수 없음)."""
+    s, today = ctx.settings, ctx.today
+    old = dict((p["key"], p) for p in ((prev or {}).get("recent_posts") or []))
+    baseline = prev is None or "recent_posts" not in prev
+    for r in rows:
+        if r["key"] in old:
+            continue
+        old[r["key"]] = {"key": r["key"], "title": ml.mask_pii(r["title"]), "date": ml.iso(r["date"]), "url": r.get("href") if (r.get("href") or "").startswith("http") else None,
+                         "first_seen": None if baseline else ml.iso(today)}
+    keep_from = ml.iso(today - dt.timedelta(days=int(s["recent_posts_keep_days"])))
+    kept = [p for p in old.values() if p["date"] >= keep_from]
+    kept.sort(key=lambda p: p["date"], reverse=True)
+    return kept[: int(s["recent_posts_cap"])]
+
+
+def collect_typo_items(board, rows, prev, ctx, res):
+    """신규(아직 오타 점검하지 않은) 게시글의 본문을 가져와 AI 오타 점검 대기열에 담는다.
+    상한: 게시판당 max_posts_per_board, 실행당 max_posts_per_run. 한 번 점검한 글은 다시 요청하지 않는다."""
+    tc = ctx.settings["typo_check"]
+    checked = list((prev or {}).get("typo_checked") or [])
+    res["typo_items"], res["typo_skipped"] = [], []
+    res["typo_checked"] = checked
+    if not (ctx.typo_enabled and board["type"] == "board" and board.get("typo_check", True) and rows):
+        return
+    done = set(checked)
+    cands = [r for r in rows if r["key"] not in done and r.get("href") and not str(r["href"]).lower().startswith("javascript")]
+    cands.sort(key=lambda r: r["date"], reverse=True)
+    for r in cands[: int(tc["max_posts_per_board"])]:
+        if not ctx.fetcher.host_allowed(r["href"]):
+            continue
+        with ctx.typo_lock:
+            if ctx.typo_budget <= 0:
+                res["typo_skipped"].append({"url": r["href"], "reason": "실행당 상한 초과(다음 실행에서 점검)"})
+                continue
+            ctx.typo_budget -= 1
+        resp = ctx.fetcher.get(r["href"])
+        if not resp.ok:
+            res["typo_skipped"].append({"url": r["href"], "reason": "게시글 접속 실패(HTTP %s %s)" % (resp.status, resp.error or "")})
+            continue  # 다음 실행에서 재시도
+        body, how = ml.extract_post_body(ml.decode_body(resp.body, resp.headers.get("Content-Type", "")), board)
+        checked.append(r["key"])
+        if not body.strip():
+            res["typo_skipped"].append({"url": r["href"], "reason": "본문을 찾지 못함(%s): site-profile의 body_region 지정 필요" % how})
+            continue
+        res["typo_items"].append({"board_id": board["id"], "name": board["name"], "system": board["system"], "post_key": r["key"],
+                                  "title": ml.mask_pii(r["title"]), "date": ml.iso(r["date"]), "url": r["href"], "body_method": how,
+                                  "text": ml.mask_pii(body[: int(tc["max_chars"])]), "truncated": len(body) > int(tc["max_chars"])})
+    res["typo_checked"] = checked[-int(tc["checked_cap"]):]
+
+
 def process_board(board, prev, ctx):
     s, today, f = ctx.settings, ctx.today, ctx.fetcher
     res = {"id": board["id"], "name": board["name"], "system": board["system"], "url": board["url"],
@@ -290,6 +342,10 @@ def process_board(board, prev, ctx):
         if not parsed_first["region_found"]:
             res["reasons"].append("region_not_found")
 
+        res["post_links"] = [r["href"] for r in rows[:5] if r.get("href")]
+        res["recent_posts"] = merge_recent_posts(prev, rows, ctx)
+        collect_typo_items(board, rows, prev, ctx, res)
+
         # 링크·첨부 점검
         links_due = True
         if prev and prev.get("links_checked"):
@@ -348,8 +404,10 @@ def estimate(fetch, settings, mode):
     reqs = sum(int(b.get("pages", 1)) for b in fetch)
     link_upper = len(fetch) * int(settings["max_links_per_board"]) if settings["check_links"] else 0
     interval = float(settings["min_interval_sec"])
-    return {"list_requests": reqs, "link_requests_upper_bound": link_upper,
-            "est_minutes_min": round(reqs * interval / 60, 1), "est_minutes_max": round((reqs + link_upper) * interval / 60, 1)}
+    tc = settings["typo_check"]
+    typo_upper = min(int(tc["max_posts_per_run"]), len(fetch) * int(tc["max_posts_per_board"])) if tc.get("enabled") else 0
+    return {"list_requests": reqs, "link_requests_upper_bound": link_upper, "typo_post_requests_upper_bound": typo_upper,
+            "est_minutes_min": round(reqs * interval / 60, 1), "est_minutes_max": round((reqs + link_upper + typo_upper) * interval / 60, 1)}
 
 
 # ------------------------------------------------------------------ 출력
@@ -378,6 +436,8 @@ def main(argv=None):
     ap.add_argument("--resume", action="store_true", help="같은 날짜 실행의 중단 지점부터 재개")
     ap.add_argument("--dry-run", action="store_true", help="요청하지 않고 계획·예상 요청량만 출력")
     ap.add_argument("--no-links", action="store_true")
+    ap.add_argument("--typo-check", action="store_true", help="신규 게시글 본문을 수집해 AI 오타 점검 대상으로 담는다(settings의 typo_check.enabled와 동일)")
+    ap.add_argument("--probe-post", action="store_true", help="--probe 와 함께: 첫 게시글 본문 추출 결과를 미리 본다")
     ap.add_argument("--today", default="", help="기준일(YYYY-MM-DD). 시험·소급 점검용")
     ap.add_argument("--probe", default="", help="board id 1개의 파싱 결과만 출력(캐시 변경 없음)")
     args = ap.parse_args(argv)
@@ -402,6 +462,8 @@ def main(argv=None):
     ctx = Ctx()
     ctx.settings, ctx.today, ctx.fetcher, ctx.mode, ctx.no_links = settings, today, fetcher, args.mode, args.no_links
     ctx.renderer, ctx.render_error, ctx.render_lock = None, None, threading.Lock()
+    ctx.typo_enabled = bool(args.typo_check or settings["typo_check"].get("enabled"))
+    ctx.typo_budget, ctx.typo_lock = int(settings["typo_check"]["max_posts_per_run"]), threading.Lock()
 
     if args.probe:
         b = next((x for x in boards if x["id"] == args.probe), None)
@@ -411,6 +473,13 @@ def main(argv=None):
         res = process_board(b, None, ctx)
         out = {k: res[k] for k in ("id", "url", "fetch_status", "fetch_error", "final_url", "page_title", "region_found",
                                     "latest_date", "latest_title", "window_oldest", "post_counting", "fingerprint", "reasons")}
+        if args.probe_post and res.get("post_links"):
+            pr = fetcher.get(res["post_links"][0])
+            if pr.ok:
+                body, how = ml.extract_post_body(ml.decode_body(pr.body, pr.headers.get("Content-Type", "")), b)
+                out["post_preview"] = {"url": res["post_links"][0], "method": how, "chars": len(body), "text_head": ml.mask_pii(body[:300])}
+            else:
+                out["post_preview"] = {"url": res["post_links"][0], "error": "HTTP %s %s" % (pr.status, pr.error or "")}
         out["rendered"] = bool(res.get("rendered"))
         out["date_note"] = res.get("date_note")
         out["rows_seen"] = len(res.get("seen_posts", {}))
@@ -539,7 +608,8 @@ def main(argv=None):
             resolved.append(dict(f, state="해결", resolved_on=str(today)))
     # 캐시 갱신
     for bid, res in final.items():
-        entry = {k: v for k, v in res.items() if k not in ("excerpt", "titles", "reasons", "changed", "new_posts", "fetched")}
+        entry = {k: v for k, v in res.items() if k not in ("excerpt", "titles", "reasons", "changed", "new_posts", "fetched",
+                                                               "typo_items", "typo_skipped", "post_links")}
         if res["fetched"]:
             entry["last_checked"] = str(today)
         else:
@@ -575,12 +645,14 @@ def main(argv=None):
                 for f in sorted(all_findings, key=lambda x: (sev_order.get(x["severity"], 9), x["board_id"]))]
     write_csv(os.path.join(run_dir, "inspection-details.csv"), DETAIL_COLUMNS, det_rows)
 
+    typo_items = [it for r in ordered for it in r.get("typo_items", [])]
+    typo_skipped = [dict(sk, board_id=r["id"]) for r in ordered for sk in r.get("typo_skipped", [])]
     unvisited = [b["id"] for b in boards if b["id"] not in final]
     status_counts = Counter(r["status"] for r in ordered)
     last_full = ml.from_iso(cache.get("last_full"))
     warnings = []
     if aborted["v"]:
-        warnings.append("차단 의심(403/429 연속 %d회)으로 중단됨. 부분 결과이며 --resume으로 재개 가능. 보안·운영 부서에 허용 목록 등록을 요청하세요." % settings["abort_after_blocked"])
+        warnings.append("중단됨: %s. 부분 결과이며 --resume으로 재개 가능. 보안·운영 부서에 허용 목록 등록·서버 상태 확인을 요청하세요." % (fetcher.abort_reason or "차단·장애 의심"))
     if args.mode == "incremental" and (last_full is None or (today - last_full).days >= int(settings["full_every_days"])):
         warnings.append("마지막 전체 점검: %s. 전체 점검(--mode full) 권장" % (last_full or "이력 없음"))
     err_boards = sum(1 for r in ordered if r["status"] in ERROR_STATUSES)
@@ -591,12 +663,15 @@ def main(argv=None):
                "excluded": len(excluded), "unvisited_no_cache": unvisited, "status_counts": dict(status_counts),
                "findings": len(all_findings), "findings_new": sum(1 for f in all_findings if f["state"] == "신규"),
                "findings_continuing": sum(1 for f in all_findings if f["state"] == "지속"), "findings_resolved": len(resolved),
-               "ai_review_items": len(queue), "requests": fetcher.request_count, "warnings": warnings,
+               "ai_review_items": len(queue), "typo_check": ctx.typo_enabled, "typo_items": len(typo_items),
+               "typo_skipped": len(typo_skipped), "requests": fetcher.request_count, "warnings": warnings,
                "request_policy": plan["request_policy"]}
     ml.save_json(os.path.join(run_dir, "run-summary.json"), summary)
     ml.save_json(os.path.join(run_dir, "findings.json"), {"meta": summary, "findings": all_findings, "resolved": resolved,
                                                            "boards": [{k: v for k, v in r.items() if k not in ("excerpt", "titles", "findings", "seen_posts")} for r in ordered]})
     ml.save_json(os.path.join(run_dir, "ai-review-queue.json"), {"date": str(today), "items": queue})
+    if ctx.typo_enabled:
+        ml.save_json(os.path.join(run_dir, "typo-review-queue.json"), {"date": str(today), "items": typo_items, "skipped": typo_skipped})
 
     # 월간 집계용 이력 스냅샷 (캐시 전체 상태 기준)
     snap = {"date": str(today), "mode": args.mode, "summary": {k: summary[k] for k in ("visited", "from_cache", "status_counts", "requests", "partial")},

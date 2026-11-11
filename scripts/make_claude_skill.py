@@ -68,6 +68,14 @@ description: 공공기관 홈페이지 점검 스킬(채팅용). 게시판 최�
 `state.zip`(이력 포함)을 올린 대화에서: `python SKILL_DIR/scripts/monthly_report.py --workspace WS --month YYYY-MM`
 생성된 `monthly-report.md`의 `AI_COMMENT` 자리에 3~5줄 종합 의견을 쓴다 (`core/monthly-report.md` 규칙, 표의 수치만 인용).
 
+## 질문에 답하기 (state.zip을 올린 대화)
+
+`state.zip`을 복원한 뒤에는 **사이트 접속 없이** 다음 질문에 답할 수 있다.
+- "어제 그제 현행화된 게시물?" → `python SKILL_DIR/scripts/recent_changes.py --workspace WS --days 2` (결과의 `주의`를 그대로 전달. 데이터는 마지막 점검 시점까지)
+- "보도자료 현황 / 전체 현황" → `python SKILL_DIR/scripts/lookup.py --workspace WS status 보도자료` / `overview`
+- "담당자 연락처" → `python SKILL_DIR/scripts/lookup.py --workspace WS contact 보도자료` (해당 페이지 접속 필요. 공개된 표기만 전달하고 추정하지 않는다)
+최신 데이터가 필요하면 점검을 먼저 실행한 뒤 조회한다.
+
 ## 사용자에게 보고할 내용
 
 모드, 방문/캐시 수, 신규·지속·해결 건수, 확정 오류, 신규 지연 게시판, 경고, 점검 한계(미점검·AI 판단 미실시 포함)

@@ -12,6 +12,10 @@
 | `judgement.json` | judge.py 또는 에이전트 | AI 판단 결과 |
 | `inspection-summary.md` | make_summary.py | 9개 구성 요약 보고 |
 | `results.jsonl` | collect.py | 게시판별 중간 결과(재개용) |
+| `search-index-links.csv`, `search-index-summary.json` | check_index_links.py | 검색엔진 인덱스 URL 점검 결과 |
+| `typo-review-queue.json` | collect.py --typo-check | 오타 점검 대상 신규 게시글(본문, 마스킹) |
+| `typo-judgement.json` | judge.py --task typo 또는 에이전트 | 게시글 오타 판단(원문 인용 검증됨) |
+| `reports/recent/*.md, *.json` | recent_changes.py | 최근 현행화 조회 결과. `latest.*`는 최근 14일 요약(매 실행 후 갱신) |
 
 월간 보고는 `workspace/reports/YYYY-MM/` (`monthly-report.md`, `monthly-metrics.json`, `monthly-boards.csv`)에 저장된다.
 
@@ -54,4 +58,6 @@
 - 404오류
 - 500오류
 - 접속오류 (타임아웃, 연결 실패, 기타 4xx)
-- 리다이렉트오류 (허용 도메인 밖으로 이동)
+- 리다이렉트오류 (허용 도메인 밖으로 이동, 또는 deep link가 메인으로 이동)
+- 소프트404 (상태코드 200이나 '페이지 없음' 안내) — 검색 인덱스 점검
+- 빈페이지의심, 깨진이미지, 제목불일치 — 검색 인덱스 점검

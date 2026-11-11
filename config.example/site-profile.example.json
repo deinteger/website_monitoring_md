@@ -17,7 +17,11 @@
         "tag": "table",
         "class": "board-list"
       },
-      "row_tag": "tr"
+      "row_tag": "tr",
+      "body_region": {
+        "tag": "div",
+        "class": "view-content"
+      }
     },
     {
       "id": "press",
@@ -93,6 +97,8 @@
     "exclude": "점검 제외 (접속하지 않음)",
     "pages/page_url_template": "월별 신규 콘텐츠 집계용으로 목록을 여러 쪽 수집할 때 ({page} 포함)",
     "owner": "담당부서 (월간 보고의 부서별 현황에 사용)",
-    "render": "playwright 지정 시 이 게시판만 브라우저로 렌더링(선택 모듈, 별도 설치). render_wait=렌더링 완료를 기다릴 CSS 선택자"
+    "render": "playwright 지정 시 이 게시판만 브라우저로 렌더링(선택 모듈, 별도 설치). render_wait=렌더링 완료를 기다릴 CSS 선택자",
+    "body_region": "게시글 상세 페이지의 본문 영역 {tag, class|id}. 오타 점검에 사용(미지정 시 휴리스틱). --probe <id> --probe-post 로 확인",
+    "typo_check": "false 면 이 게시판은 오타 점검에서 제외"
   }
 }

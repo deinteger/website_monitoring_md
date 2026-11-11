@@ -18,6 +18,7 @@ import collect  # noqa: E402
 import judge  # noqa: E402
 import make_summary  # noqa: E402
 import monlib as ml  # noqa: E402
+import recent_changes  # noqa: E402
 
 
 def main(argv=None):
@@ -27,10 +28,13 @@ def main(argv=None):
     ap.add_argument("--sample-rate", default="0")
     ap.add_argument("--judge", choices=["auto", "yes", "no"], default="auto")
     ap.add_argument("--today", default="")
+    ap.add_argument("--typo-check", action="store_true", help="신규 게시글 본문 오타 점검 포함")
     args = ap.parse_args(argv)
     cargs = ["--workspace", args.workspace, "--mode", args.mode, "--sample-rate", args.sample_rate]
     if args.today:
         cargs += ["--today", args.today]
+    if args.typo_check:
+        cargs += ["--typo-check"]
     code = collect.main(cargs)
     if code in (1,):
         return code
@@ -39,9 +43,13 @@ def main(argv=None):
     jcode = 0
     if run_judge:
         jcode = judge.main(["--workspace", args.workspace])
+        if args.typo_check or settings.get("typo_check", {}).get("enabled"):
+            jcode = jcode or judge.main(["--workspace", args.workspace, "--task", "typo"])
     else:
         print("[안내] AI 판단 건너뜀 (--judge auto: llm.allowed 또는 LLM_API_KEY 없음). 에이전트로 판단하거나 설정 후 judge.py 실행")
     make_summary.main(["--workspace", args.workspace])
+    # 채팅형 AI에 올려 "어제 그제 뭐 올라왔어?"에 답할 수 있는 최근 14일 요약 갱신 (오프라인 계산)
+    recent_changes.main(["--workspace", args.workspace, "--latest", "--quiet"] + (["--today", args.today] if args.today else []))
     return code or jcode
 
 
