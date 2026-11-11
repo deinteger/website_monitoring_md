@@ -5,6 +5,7 @@ pi(Orca 포함), Codex, Antigravity, Cline 등 `AGENTS.md`를 읽는 에이전�
 
 ## 작업 시작 전 반드시
 
+0. 터미널을 쓸 수 있는지 먼저 시험한다(`python --version`). 못 쓰는 채팅 환경이면 `core/skill-body.md`의 '실행 환경 판별'에 따라 스크립트를 실행한 것처럼 말하지 않고, 사용자가 올린 결과 파일로만 판단·조회·보고한다.
 1. `core/rules.md` 를 읽고 따른다 (읽기 전용, 차단 시 중단, 외부 전송 승인, 개인정보 마스킹).
 2. 점검(범위 선택 포함)·월간 보고·온보딩·질의(최근 게시물, 현황, 담당자 연락처) 요청이면 `core/skill-body.md` 의 절차를 따른다. 스킬(`homepage-inspection`)이 인식되면 그것을 사용해도 같다.
 3. 판단 단계에서는 `core/judgement-guide.md` 기준을 쓴다.

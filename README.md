@@ -1,10 +1,10 @@
 # 홈페이지 점검·모니터링 키트
 
 > **2026 공공 AI 대전환 챌린지 세션1 출품작.** 구동은 `python scripts/demo.py` 한 줄이면 됩니다(Python 3.8+, 외부 패키지·접속·API 키 불필요).
-> - **Python이 없다면**: 이 키트는 Python 3.8 이상만 있으면 되고 외부 패키지는 필요 없지만, **Python 실행기 자체는 포함하지 않습니다.** `run_demo.bat`(Windows) / `run_demo.sh`(Linux·macOS)가 Python을 찾아 실행하고, 없으면 안내합니다. 설치가 어려운 PC에서는 Python 임베디드 배포본을 `python/` 폴더에 풀어 두면 `run_demo.bat`가 그것을 씁니다(`docs/대회제출/10_구동안내서_초안.md`).
+> - **Python이 없다면**: 이 키트는 Python 3.8 이상만 있으면 되고 외부 패키지는 필요 없지만, **Python 실행기 자체는 포함하지 않습니다.** `run_demo.bat`(Windows) / `run_demo.sh`(Linux·macOS)가 Python을 찾아 실행하고, 없으면 안내합니다. 설치가 어려운 PC에서는 Python 임베디드 배포본을 `python/` 폴더에 풀어 두면 `run_demo.bat`가 그것을 씁니다(`docs/운영가이드.md` 참고).
 > - **접속 주소**: 없음(로컬 실행. 데모는 로컬에 모의 기관 사이트를 띄웁니다)
 > - **주요 기능**: 게시판 최신성·링크·게시글 오타 점검, 정책정보 확인주간 체크리스트, 범정부 UI/UX 가이드라인 점검, 구글·네이버·다음 검색 포털 점검, 최근 현행화·담당자 연락처 질의
-> - **실행·작동 방법**: 아래 "빠른 시작"과 `docs/대회제출/10_구동안내서_초안.md` (제출 안내: `docs/대회제출/00_제출체크리스트_세션1.md`)
+> - **실행·작동 방법**: 아래 "빠른 시작"과 `docs/운영가이드.md`, AI 도구별 사용법 `docs/AI-호환성.md`, 시작 문구 `docs/AI-시작-프롬프트.md`
 
 공공기관 홈페이지의 **링크·접속 오류, 게시 최신성(달력 기준 3개월), 현행화 의심, 문구, 월간 현황**을 점검하는 키트입니다.
 **수집·날짜 계산은 파이썬 스크립트**가, **추론이 필요한 판단은 AI**가 맡습니다. 담당자가 각자 맡은 시스템에 적용하도록 설계했습니다.
@@ -138,3 +138,8 @@ python scripts/make_release.py                # 배포 zip (허용 목록 방식
 ## 설정은 채팅 또는 명령으로
 
 소스 코드나 JSON을 직접 열지 않아도 된다. AI에게 "우리 기관 사이트(주소, 게시판)를 점검 대상으로 추가해줘", "AI 연결을 anthropic으로 설정해줘"라고 말하면 `scripts/setup.py`가 `workspace/`의 설정을 바꾼다. 직접 할 때는 `python scripts/setup.py show` 로 현재 상태를 보고 `board add|set|remove`, `set`, `llm`, `site` 명령을 쓴다. API 키는 파일에 저장하지 않고 환경변수 `LLM_API_KEY` 로만 지정한다. 모든 설정·결과는 사용자 PC의 `workspace/`에만 저장된다. 자세한 절차는 `core/onboarding.md` 0절.
+
+
+## 도구별 설치용 묶음 (`packages/`)
+
+폴더형 도구(Claude Code, Codex, Antigravity, Orca, Cline)는 이 폴더를 열면 됩니다. Claude 채팅용 스킬 zip과 ChatGPT용 자료는 `packages/`에 같이 들어 있습니다(`packages/README.md`). 지침은 AI가 먼저 터미널 사용 여부를 시험해 채팅 환경인지 판별하도록 되어 있습니다(`core/skill-body.md`의 '실행 환경 판별').

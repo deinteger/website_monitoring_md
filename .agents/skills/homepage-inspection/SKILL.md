@@ -25,7 +25,7 @@ python scripts/monthly_report.py --workspace workspace --month YYYY-MM         #
 ```
 
 - `workspace/site-profile.json`이 없으면 점검 전에 `core/onboarding.md`로 프로필을 만든다.
-- 대상 사이트·담당자·AI 연결 변경 요청은 소스·JSON을 직접 고치지 말고 `python scripts/setup.py`(`board add|set|remove`, `set`, `llm`, `show`)로 반영한다(`core/onboarding.md` 0절). API 키는 `LLM_API_KEY` 환경변수로만 안내한다.
+- 대상 사이트·담당자·AI 연결 변경 요청은 소스·JSON을 직접 고치지 말고 `python scripts/setup.py`(`board add|set|remove`, `set`, `llm`, `show`)로 반영한다(`core/onboarding.md` 0절). API 키는 `LLM_API_KEY` 환경변수로만 안내한다. 시작 전에 실행 환경(터미널 사용 가능/채팅만/접속 불가)을 `core/skill-body.md`의 '실행 환경 판별'로 먼저 판별하고, 스크립트를 실행하지 못했으면 실행한 것처럼 말하지 않는다.
 - 스크립트가 확정한 값(상태코드, 최신 게시일, 지연 판정)을 AI가 다시 계산하거나 뒤집지 않는다.
 - 차단 의심(종료코드 2)이면 재시도·우회하지 말고 사용자에게 보안·운영 부서 협의를 안내한다.
 

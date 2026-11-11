@@ -52,7 +52,7 @@ INSTRUCTIONS = """당신은 공공기관 홈페이지 점검 보조자다. 실�
 HOWTO = """ChatGPT 사용법 (맞춤 GPT)
 1. ChatGPT > GPT 만들기 > 구성 > 지침에 instructions.txt 내용을 붙여 넣는다 (글자 수 한도는 화면에서 확인).
 2. 지식에 knowledge/ 폴더의 파일을 올리고, 코드 인터프리터(데이터 분석)를 켠다.
-3. 대화 첫머리에 kit.zip 을 첨부하고 "kit.zip 을 풀고 데모를 돌려줘" 라고 한다. (샌드박스에 외부 접속이 되는지 확인 필요)
+3. 대화 첫머리에 kit.zip(없으면 키트 저장소를 압축한 파일)을 첨부하고 "kit.zip 을 풀고 데모를 돌려줘" 라고 한다. (샌드박스에 외부 접속이 되는지 확인 필요)
 4. 실제 점검은 사용자 PC에서 수집한 결과 폴더(workspace/runs/날짜/)를 압축해 올린 뒤 "판단·보고해줘"라고 한다.
 5. 작업이 끝나면 만들어진 결과 파일을 내려받는다 (세션 종료 시 삭제).
 ※ GPT 웹은 대상 사이트 접속이 막힐 수 있다. 확인 전에는 수집을 로컬(Codex 등)에서 하는 방식을 기본으로 한다.
@@ -61,8 +61,12 @@ HOWTO = """ChatGPT 사용법 (맞춤 GPT)
 
 
 def main(argv=()):
-    import subprocess
-    out = os.path.join(ROOT, "dist", "gpt-bundle")
+    import argparse
+    ap = argparse.ArgumentParser(description=__doc__)
+    ap.add_argument("--outdir", default=os.path.join(ROOT, "dist", "gpt-bundle"))
+    ap.add_argument("--no-kit", action="store_true", help="kit.zip 을 넣지 않는다(키트 안에 포함해 배포할 때)")
+    args = ap.parse_args(argv)
+    out = args.outdir
     if os.path.exists(out):
         shutil.rmtree(out)
     os.makedirs(os.path.join(out, "knowledge"))
@@ -77,12 +81,13 @@ def main(argv=()):
         src = os.path.join(ROOT, rel)
         if os.path.isfile(src):
             shutil.copyfile(src, os.path.join(out, "knowledge", os.path.basename(rel)))
-    import make_release
-    if make_release.main(()) != 0:
-        return 1
-    zname = "website-monitoring-kit-v%s.zip" % ml.VERSION
-    shutil.copyfile(os.path.join(ROOT, "dist", zname), os.path.join(out, "kit.zip"))
-    print("GPT 묶음: %s (지침 %d자, 지식 %d개, kit.zip)" % (out, len(INSTRUCTIONS), len(os.listdir(os.path.join(out, "knowledge")))))
+    if not args.no_kit:
+        import make_release
+        if make_release.main(()) != 0:
+            return 1
+        zname = "website-monitoring-kit-v%s.zip" % ml.VERSION
+        shutil.copyfile(os.path.join(ROOT, "dist", zname), os.path.join(out, "kit.zip"))
+    print("GPT 묶음: %s (지침 %d자, 지식 %d개%s)" % (out, len(INSTRUCTIONS), len(os.listdir(os.path.join(out, "knowledge"))), "" if args.no_kit else ", kit.zip"))
     return 0
 
 

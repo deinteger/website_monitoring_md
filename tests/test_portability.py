@@ -55,10 +55,6 @@ class Portability(unittest.TestCase):
             self.assertTrue(os.path.isfile(os.path.join(ROOT, f)), f)
 
 
-if __name__ == "__main__":
-    unittest.main()
-
-
 class GptBundle(unittest.TestCase):
     @unittest.skipUnless(os.path.exists(os.path.join(ROOT, "scripts", "make_gpt_bundle.py")) and os.path.isdir(os.path.join(ROOT, ".git")), "저장소에서만")
     def test_bundle_builds(self):
@@ -72,3 +68,25 @@ class GptBundle(unittest.TestCase):
         names = zipfile.ZipFile(os.path.join(out, "kit.zip")).namelist()
         self.assertTrue(any(n.endswith("scripts/setup.py") for n in names))
         self.assertFalse(any("/workspace/" in n and not n.endswith(".gitkeep") for n in names))
+
+
+class ReleasePackages(unittest.TestCase):
+    @unittest.skipUnless(os.path.isdir(os.path.join(ROOT, ".git")), "저장소에서만")
+    def test_release_contains_chat_packages_and_env_detection(self):
+        import make_release
+        import zipfile
+        self.assertEqual(make_release.main(()), 0)
+        base = os.path.join(ROOT, "dist", "website-monitoring-kit-v%s" % make_release.ml.VERSION)
+        pk = os.path.join(base, "packages")
+        for f in ("homepage-inspection-claude-skill.zip", "homepage-inspection-claude-code-skill.zip", "README.md",
+                  os.path.join("gpt-bundle", "instructions.txt")):
+            self.assertTrue(os.path.isfile(os.path.join(pk, f)), f)
+        names = zipfile.ZipFile(os.path.join(pk, "homepage-inspection-claude-skill.zip")).namelist()
+        self.assertTrue(any(n.endswith("/SKILL.md") for n in names))
+        self.assertFalse(any("nihhs" in n.lower() for n in names))
+        for f in ("AGENTS.md", os.path.join("core", "skill-body.md")):
+            self.assertIn("실행 환경 판별", open(os.path.join(base, f), encoding="utf-8").read())
+
+
+if __name__ == "__main__":
+    unittest.main()

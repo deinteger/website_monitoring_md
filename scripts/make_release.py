@@ -25,6 +25,19 @@ ALLOWED_HOSTS = {"example.go.kr", "www.example.go.kr", "example.com", "www.examp
                  "api.openai.com", "api.anthropic.com", "claude.ai", "github.com", "pi.dev", "onorca.dev", "www.onorca.dev",
                  "code.claude.com", "cdn.jsdelivr.net", "docs.cline.bot", "fast.io", "support.claude.com", "platform.claude.com",
                  "www.google.com", "search.naver.com", "search.daum.net", "gitlab.aigov.go.kr"}
+PACKAGES_README = """# packages/ — 도구별 설치용 묶음
+
+폴더형 도구(Claude Code, Codex, Antigravity, Orca, Cline)는 이 저장소 폴더를 열기만 하면 된다(`AGENTS.md`, `.claude/skills/`, `.agents/skills/`). 아래는 채팅형 환경용이다.
+
+| 파일 | 용도 |
+| --- | --- |
+| `homepage-inspection-claude-skill.zip` | Claude 채팅(claude.ai) 설정 > 스킬에 업로드 |
+| `homepage-inspection-claude-code-skill.zip` | Claude Code 개인 스킬(`~/.claude/skills/`)로 풀어 설치 |
+| `gpt-bundle/` | ChatGPT 맞춤 GPT: `instructions.txt`를 지침에, `knowledge/`를 지식에 올림(`사용법.txt` 참고) |
+
+어느 환경이든 지침(`core/skill-body.md`의 '실행 환경 판별')에 따라 AI가 터미널 사용 여부를 먼저 시험하고 그에 맞게 동작한다.
+최신 상태로 다시 만들려면 `python scripts/make_claude_skill.py --target chat`, `python scripts/make_gpt_bundle.py`.
+"""
 TEXT_EXT = (".md", ".py", ".json", ".txt", ".csv", ".html", ".gitignore", "")
 
 
@@ -87,6 +100,19 @@ def main(argv=()):
     open(os.path.join(out, "workspace", ".gitkeep"), "w").close()
     with open(os.path.join(out, "VERSION"), "w", encoding="utf-8") as f:
         f.write(ml.VERSION + "\n")
+    # 채팅형(Claude 채팅 스킬 zip·ChatGPT 묶음)은 같이 배포한다. 폴더형 도구는 위 입구 파일을 그대로 쓴다
+    import make_claude_skill
+    import make_gpt_bundle
+    pk = os.path.join(out, "packages")
+    if make_claude_skill.main(["--target", "chat", "--outdir", pk]) or make_claude_skill.main(["--target", "code", "--outdir", pk]):
+        return 1
+    shutil.rmtree(os.path.join(pk, "homepage-inspection"), ignore_errors=True)
+    shutil.rmtree(os.path.join(pk, "code-skill"), ignore_errors=True)
+    if make_gpt_bundle.main(["--outdir", os.path.join(pk, "gpt-bundle"), "--no-kit"]):
+        return 1
+    with open(os.path.join(pk, "README.md"), "w", encoding="utf-8") as f:
+        f.write(PACKAGES_README)
+    files = sorted(set(files) | {os.path.relpath(os.path.join(d, x), out) for d, _, fs in os.walk(pk) for x in fs})
     bad = scan_hosts(out, files)
     if bad:
         shutil.rmtree(out)
